@@ -77,3 +77,14 @@ for epoch in range(3):
 
         loop.set_postfix(loss=loss.item())
 
+
+# Save the model after training
+model_path = "discriminator_model.pth"  # or .pt extension
+torch.save({
+    'epoch': epoch,
+    'model_state_dict': model.state_dict(),
+    'optimizer_state_dict': optimizer.state_dict(),
+    'loss': loss,
+}, model_path)
+
+print(f"Model saved to {model_path}")
