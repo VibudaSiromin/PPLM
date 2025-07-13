@@ -2,15 +2,17 @@ import torch
 import json
 
 def load_bow_vector(bow_file, tokenizer):
-    """
-    Load a Bag-of-Words vector from a word list (no weights).
-    All words get equal weight (1.0).
-    """
     with open(bow_file, "r") as f:
-        words = json.load(f)  
-    vec = torch.zeros(len(tokenizer))
+        words = json.load(f)
+
+    vocab_size = len(tokenizer)
+    print(f"[INFO] BoW vector size: {vocab_size}")
+    
+    vec = torch.zeros(vocab_size)
     for word in words:
         token_ids = tokenizer.encode(word, add_special_tokens=False)
         for tid in token_ids:
-            vec[tid] = 1.0  # uniform weight
+            if tid < vocab_size:
+                vec[tid] = 1.0
     return vec
+
