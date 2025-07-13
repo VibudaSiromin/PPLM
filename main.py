@@ -39,6 +39,6 @@ else:
 # === Generate ===
 prompt = "The person walked into the room and said"
 output = generate(model, tokenizer, prompt, bow_vec=bow_vec, disc_model=disc_model,
-                  steps=5, step_size=0.04, max_len=60)
+                  steps=1, step_size=0.04, max_len=60)
 
 print(f"\n[Generated Text]\n{output}")
