@@ -1,32 +1,30 @@
 import torch
 import json
-from models import Discriminator, load_lm
+import gc
+
+from models import Discriminator
+from load_lm import load_lm
 from bow_utils import load_bow_vector
 from pplm_engine import generate
 
-# Choose model: Qwen or Mistral
-MODEL_NAME = "qwen/Qwen1.5-7B-Chat"  # or "mistralai/Mistral-7B-Instruct-v0.3"
+# === Choose base model ===
+MODEL_NAME = "Qwen/Qwen1.5-7B-Chat"  # or "mistralai/Mistral-7B-Instruct-v0.3"
 
-# === Load base model ===
+# === Load model in 4-bit ===
 model, tokenizer = load_lm(MODEL_NAME)
 
-# === Choose control method ===
+# === GPU cleanup before generation ===
+torch.cuda.empty_cache()
+gc.collect()
+
+# === Settings ===
 USE_BOW = True
 USE_DISC = False
 TARGET_GROUP = "older"  # or "younger"
+prompt = "The person walked into the room and said"
 
-# === Get true vocab size from the model (logits dim)
-dummy_input = tokenizer("dummy", return_tensors="pt").input_ids.to(model.device)
-with torch.no_grad():
-    output = model(input_ids=dummy_input)
-    actual_vocab_size = output.logits.shape[-1]
-
-# === Load BoW vector ===
-if USE_BOW:
-    bow_file = f"bow_{TARGET_GROUP}.json"
-    bow_vec = load_bow_vector(bow_file, tokenizer, expected_vocab_size=actual_vocab_size)
-else:
-    bow_vec = None
+# === Load BoW ===
+bow_vec = load_bow_vector(f"bow_{TARGET_GROUP}.json", tokenizer) if USE_BOW else None
 
 # === Load Discriminator ===
 if USE_DISC:
@@ -37,8 +35,8 @@ else:
     disc_model = None
 
 # === Generate ===
-prompt = "The person walked into the room and said"
 output = generate(model, tokenizer, prompt, bow_vec=bow_vec, disc_model=disc_model,
                   steps=1, step_size=0.04, max_len=60)
 
-print(f"\n[Generated Text]\n{output}")
+print("\n[Generated Text]")
+print(output)
