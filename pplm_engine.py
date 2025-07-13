@@ -34,10 +34,15 @@ def perturb_past(
         inputs_embeds.requires_grad_(True)
 
         # Forward with embeddings (instead of input_ids)
-        outputs = model(inputs_embeds=inputs_embeds, past_key_values=past, use_cache=True)
+        outputs = model(
+            inputs_embeds=inputs_embeds,
+            past_key_values=past,
+            use_cache=True,
+            output_hidden_states=True  # this enables hidden_states
+        )
         logits = outputs.logits
-        hidden = outputs.hidden_states[-1] if hasattr(outputs, "hidden_states") else logits
-
+        hidden = outputs.hidden_states[-1]  # Last layer
+        
         # Compute loss (BoW or discriminator)
         loss = loss_fn(logits, hidden)
         loss.backward()
