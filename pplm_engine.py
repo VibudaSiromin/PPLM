@@ -15,46 +15,56 @@ def discrim_loss(hidden, disc_model):
     return F.cross_entropy(logits, labels)
 
 # === Perturb logits ===
-def perturb_past(model, input_ids, past_key_values, loss_fn, steps=1, step_size=0.03):
-    """
-    Safely apply PPLM-style perturbation using loss_fn on logits or hidden state.
-    No retain_graph needed.
-    """
-    device = next(model.parameters()).device
-    perturbed_logits = None
+def perturb_past(
+    model,
+    input_ids,
+    past,
+    loss_fn,
+    steps=3,
+    step_size=0.03,
+):
+    grad_accumulator = None
+    accumulated_hidden = None
 
     for _ in range(steps):
-        input_ids = input_ids.detach()
-        outputs = model(
-            input_ids=input_ids,
-            past_key_values=past_key_values,
-            use_cache=True,
-            output_hidden_states=True
-        )
+        input_ids = input_ids[:, -1:]  # Only feed the latest token
+        input_ids = input_ids.clone().detach().requires_grad_(True)
 
-        logits = outputs.logits[:, -1, :]  # shape: (1, vocab_size)
-        hidden = outputs.hidden_states[-1][:, -1, :]  # shape: (1, hidden_size)
+        # Forward pass with current input
+        outputs = model(input_ids=input_ids, past_key_values=past, use_cache=True)
+        logits = outputs.logits  # [batch, seq_len, vocab]
+        hidden = outputs.hidden_states[-1] if hasattr(outputs, "hidden_states") else logits
 
-        # Track gradients on logits
-        logits = logits.clone().detach().requires_grad_(True)
+        # Compute loss (BoW or discriminator loss)
+        loss = loss_fn(logits, hidden)
 
-        # Compute loss from logits or hidden
-        loss = loss_fn(logits.unsqueeze(1), hidden)
-
-        # Backprop
-        model.zero_grad()
+        # Backpropagate
         loss.backward()
 
-        # Apply gradient
-        grad = logits.grad
-        if grad is not None:
-            perturbed_logits = logits + step_size * grad
+        # Get gradients
+        grads = input_ids.grad
+        if grad_accumulator is None:
+            grad_accumulator = grads.clone()
         else:
-            perturbed_logits = logits
+            grad_accumulator += grads
 
-        perturbed_logits = perturbed_logits.detach()
+        # Optional: Accumulate hidden states (used for discriminator)
+        if accumulated_hidden is None:
+            accumulated_hidden = hidden.detach()
+        else:
+            accumulated_hidden += hidden.detach()
 
-    return perturbed_logits.unsqueeze(1)  # shape: (1, 1, vocab_size)
+        # Zero out to avoid memory buildup
+        model.zero_grad()
+        torch.cuda.empty_cache()
+
+    # Apply the final gradient perturbation to the past
+    perturbed_input = input_ids - step_size * grad_accumulator.sign()
+    perturbed_input = perturbed_input.detach()
+
+    # Final forward pass with perturbed input
+    outputs = model(input_ids=perturbed_input, past_key_values=past, use_cache=True)
+    return outputs.logits
 
 # === Full generation loop ===
 def generate(model, tokenizer, prompt, bow_vec=None, disc_model=None,
