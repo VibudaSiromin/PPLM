@@ -39,8 +39,16 @@ else:
     disc_model = None
 
 # === Generate ===
-output = generate(model, tokenizer, prompt, bow_vec=bow_vec, disc_model=disc_model,
-                  steps=1, step_size=0.04, max_len=60)
+output = generate(
+    model,
+    tokenizer,
+    prompt,
+    bow_vec=bow_vec,
+    disc_model=disc_model,
+    steps=1,           # reduce perturbation steps
+    step_size=0.02,    # reduce update magnitude
+    max_len=50         # reduce generated length
+)
 
 print("\n[Generated Text]")
 print(output)
