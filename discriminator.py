@@ -79,7 +79,7 @@ for epoch in range(3):
 
 
 # Save the model after training
-model_path = "discriminator_model.pth"  # or .pt extension
+model_path = "discriminator_model.pt"  # or .pt extension
 torch.save({
     'epoch': epoch,
     'model_state_dict': model.state_dict(),
