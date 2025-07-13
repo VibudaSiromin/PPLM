@@ -27,8 +27,8 @@ prompt = "The person walked into the room and said"
 bow_vec = load_bow_vector(
     f"bow_{TARGET_GROUP}.json",
     tokenizer,
-    expected_vocab_size=tokenizer.vocab_size  # ✅ pass vocab size here
-) if USE_BOW else None
+    expected_vocab_size=model.config.vocab_size
+)
 
 # === Load Discriminator ===
 if USE_DISC:
