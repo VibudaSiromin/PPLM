@@ -31,6 +31,7 @@ def perturb_past(
         # Get embeddings for the last token only
         last_token_id = input_ids[:, -1:]
         inputs_embeds = model.get_input_embeddings()(last_token_id)
+        inputs_embeds = inputs_embeds.detach()
         inputs_embeds.requires_grad_(True)
 
         # Forward with embeddings (instead of input_ids)
