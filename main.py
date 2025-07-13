@@ -15,10 +15,16 @@ USE_BOW = True
 USE_DISC = False
 TARGET_GROUP = "older"  # or "younger"
 
+# === Get true vocab size from the model (logits dim)
+dummy_input = tokenizer("dummy", return_tensors="pt").input_ids.to(model.device)
+with torch.no_grad():
+    output = model(input_ids=dummy_input)
+    actual_vocab_size = output.logits.shape[-1]
+
 # === Load BoW vector ===
 if USE_BOW:
     bow_file = f"bow_{TARGET_GROUP}.json"
-    bow_vec = load_bow_vector(bow_file, tokenizer)
+    bow_vec = load_bow_vector(bow_file, tokenizer, expected_vocab_size=actual_vocab_size)
 else:
     bow_vec = None
 
