@@ -18,33 +18,39 @@ def discrim_loss(hidden, disc_model):
 
 # === Perturb logits using gradients from bow/discriminator loss ===
 def perturb_past(model, input_ids, past_key_values, loss_fn, steps=3, step_size=0.02):
+    device = next(model.parameters()).device
+    perturbed_logits = None
+
     for _ in range(steps):
-        # Make sure input is detached and has grad tracking
-        input_ids = input_ids.detach()
-        input_ids.requires_grad = False  # input_ids are ints; no gradients here
+        input_ids = input_ids.detach()  # No grads needed here
+        outputs = model(
+            input_ids=input_ids,
+            past_key_values=past_key_values,
+            output_hidden_states=True,
+            use_cache=True
+        )
 
-        outputs = model(input_ids=input_ids, past_key_values=past_key_values,
-                        output_hidden_states=True, use_cache=True)
-
-        logits = outputs.logits
+        logits = outputs.logits  # shape: (1, seq_len, vocab_size)
         hidden = outputs.hidden_states[-1][:, -1, :]  # last token's hidden state
-        logits.retain_grad()
+
+        logits.retain_grad()  # make sure grads can flow through logits
 
         loss = loss_fn(logits, hidden)
 
         model.zero_grad()
-        loss.backward()
+        loss.backward(retain_graph=True)  # <--- Required for multiple backward passes
 
-        # Take gradient step directly on logits (PPLM style)
-        grad = logits.grad
+        grad = logits.grad  # shape: (1, seq_len, vocab_size)
+
         if grad is not None:
+            # Apply gradient-based perturbation to logits (PPLM-style)
             perturbed_logits = logits + step_size * grad
         else:
             perturbed_logits = logits
 
-        return perturbed_logits  # return updated logits
+    # Detach to prevent graph from leaking further
+    return perturbed_logits.detach() if perturbed_logits is not None else logits.detach()
 
-    return logits  # fallback
 
 # === Full generation loop ===
 def generate(model, tokenizer, prompt, bow_vec=None, disc_model=None,
