@@ -38,7 +38,7 @@ def perturb_past(model, input_ids, past_key_values, loss_fn, steps=1, step_size=
         loss = loss_fn(logits, hidden)
 
         model.zero_grad()
-        loss.backward(retain_graph=True)  # <--- Required for multiple backward passes
+        loss.backward()  
 
         grad = logits.grad  # shape: (1, seq_len, vocab_size)
 
