@@ -24,7 +24,11 @@ TARGET_GROUP = "older"  # or "younger"
 prompt = "The person walked into the room and said"
 
 # === Load BoW ===
-bow_vec = load_bow_vector(f"bow_{TARGET_GROUP}.json", tokenizer) if USE_BOW else None
+bow_vec = load_bow_vector(
+    f"bow_{TARGET_GROUP}.json",
+    tokenizer,
+    expected_vocab_size=tokenizer.vocab_size  # ✅ pass vocab size here
+) if USE_BOW else None
 
 # === Load Discriminator ===
 if USE_DISC:
