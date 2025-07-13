@@ -17,7 +17,7 @@ def discrim_loss(hidden, disc_model):
     return F.cross_entropy(logits, labels)
 
 # === Perturb logits using gradients from bow/discriminator loss ===
-def perturb_past(model, input_ids, past_key_values, loss_fn, steps=3, step_size=0.02):
+def perturb_past(model, input_ids, past_key_values, loss_fn, steps=1, step_size=0.02):
     device = next(model.parameters()).device
     perturbed_logits = None
 
