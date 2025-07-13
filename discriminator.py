@@ -7,7 +7,7 @@ from torch.optim import Adam
 from tqdm import tqdm
 
 # === 1. Load your dataset ===
-df = pd.read_csv("modified_dataset.csv")  # Replace with the actual path
+df = pd.read_csv("textage.csv")  # Replace with the actual path
 df = df[["Sentence", "age_group"]]
 
 # Map labels to 0/1: younger = 0, older = 1
