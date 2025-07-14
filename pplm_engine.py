@@ -92,7 +92,6 @@ def generate(
         # 2. Apply perturbation to influence generation
         logits = perturb_past(
             model=model,
-            generated=generated,
             past=past,
             loss_fn=lambda logits, hidden: loss_fn(logits, hidden, bow_vec, disc_model),
             steps=steps,
