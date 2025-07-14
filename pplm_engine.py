@@ -18,53 +18,54 @@ def discrim_loss(hidden, disc_model):
 def perturb_past(model, input_ids, past, loss_fn, steps=3, step_size=0.01):
     device = input_ids.device
 
-    # Get embedding for the last token
-    inputs_embeds = model.get_input_embeddings()(input_ids)
-    inputs_embeds = torch.nn.Parameter(inputs_embeds.clone().detach())
-    inputs_embeds.requires_grad = True  # Leaf tensor with grad
+    # Get embeddings for the last token
+    with torch.enable_grad():
+        input_embed = model.get_input_embeddings()(input_ids[:, -1:])
+        input_embed = input_embed.detach().clone()
+        input_embed.requires_grad_(True)
 
-    for step in range(steps):
-        # Forward pass
+        for step in range(steps):
+            outputs = model(
+                inputs_embeds=input_embed,
+                past_key_values=past,
+                use_cache=True,
+                output_hidden_states=True,
+                return_dict=True
+            )
+
+            logits = outputs.logits
+            hidden = outputs.hidden_states[-1]
+
+            loss = loss_fn(logits, hidden)
+
+            if not input_embed.requires_grad:
+                raise RuntimeError("input_embed doesn't require grad")
+
+            model.zero_grad()
+            if input_embed.grad is not None:
+                input_embed.grad.zero_()
+
+            loss.backward()
+
+            if input_embed.grad is None:
+                raise RuntimeError("Gradient is still None after backward")
+
+            # Normalize gradient and update embedding
+            grad = input_embed.grad
+            grad_direction = step_size * grad / (grad.norm() + 1e-10)
+            input_embed = (input_embed + grad_direction).detach().clone()
+            input_embed.requires_grad_(True)
+
+        # Final pass with perturbed embeddings
         outputs = model(
-            inputs_embeds=inputs_embeds,
+            inputs_embeds=input_embed,
             past_key_values=past,
             use_cache=True,
             output_hidden_states=True,
             return_dict=True
         )
 
-        logits = outputs.logits
-        hidden = outputs.hidden_states[-1]
-
-        # Compute loss
-        loss = loss_fn(logits, hidden)
-
-        model.zero_grad()
-        if inputs_embeds.grad is not None:
-            inputs_embeds.grad.zero_()
-
-        loss.backward()
-
-        if inputs_embeds.grad is None:
-            raise RuntimeError("Gradient is None. Ensure loss is connected to inputs_embeds.")
-
-        # Normalize and apply perturbation
-        grads = inputs_embeds.grad
-        grad_direction = step_size * grads / (grads.norm() + 1e-10)
-        inputs_embeds = (inputs_embeds + grad_direction).detach()
-        inputs_embeds.requires_grad_()
-        inputs_embeds.retain_grad()
-
-    # Final forward to get modified logits
-    outputs = model(
-        inputs_embeds=inputs_embeds,
-        past_key_values=past,
-        use_cache=True,
-        output_hidden_states=True,
-        return_dict=True
-    )
-
-    return outputs.logits
+        return outputs.logits
 
 
 
