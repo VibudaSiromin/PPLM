@@ -12,10 +12,12 @@ MODEL_NAME = "Qwen/Qwen1.5-7B-Chat"  # or "mistralai/Mistral-7B-Instruct-v0.3"
 
 # === Load model in 4-bit ===
 model, tokenizer = load_lm(MODEL_NAME)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model = model.to(device)
 
 # === GPU cleanup before generation ===
-torch.cuda.empty_cache()
 gc.collect()
+torch.cuda.empty_cache()
 
 # === Settings ===
 USE_BOW = True
@@ -28,12 +30,13 @@ bow_vec = load_bow_vector(
     f"bow_{TARGET_GROUP}.json",
     tokenizer,
     expected_vocab_size=model.config.vocab_size
-)
+).to(device)
 
 # === Load Discriminator ===
 if USE_DISC:
     disc_model = Discriminator()
-    disc_model.load_state_dict(torch.load("discriminator.pt", map_location="cpu"))
+    disc_model.load_state_dict(torch.load("discriminator.pt", map_location=device))
+    disc_model.to(device)
     disc_model.eval()
 else:
     disc_model = None
