@@ -1,14 +1,17 @@
+# models.py
+
 import torch
 from torch import nn
+from transformers import BertModel
 
 class Discriminator(nn.Module):
-    def __init__(self, hidden_size):
+    def __init__(self):
         super().__init__()
-        self.fc1 = nn.Linear(hidden_size, 128)
-        self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(128, 2)  # 2 classes: older / younger
+        self.bert = BertModel.from_pretrained("bert-base-uncased")
+        self.dropout = nn.Dropout(0.3)
+        self.classifier = nn.Linear(self.bert.config.hidden_size, 2)
 
-    def forward(self, hidden_state):
-        x = self.fc1(hidden_state)
-        x = self.relu(x)
-        return self.fc2(x)
+    def forward(self, input_ids, attention_mask):
+        outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask)
+        cls = self.dropout(outputs.pooler_output)
+        return self.classifier(cls)
