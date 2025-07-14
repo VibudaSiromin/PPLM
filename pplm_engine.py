@@ -18,8 +18,10 @@ def discrim_loss(hidden, disc_model):
 def perturb_past(model, input_ids, past, loss_fn, steps=3, step_size=0.01):
     device = input_ids.device
 
-    inputs_embeds = model.get_input_embeddings()(input_ids)
-    inputs_embeds = inputs_embeds.clone().detach().requires_grad_(True)
+    embedding_layer = model.get_input_embeddings()
+    inputs_embeds = embedding_layer(input_ids)
+    inputs_embeds.requires_grad_()
+    inputs_embeds.retain_grad()
 
     for step in range(steps):
         outputs = model(
@@ -28,38 +30,31 @@ def perturb_past(model, input_ids, past, loss_fn, steps=3, step_size=0.01):
             use_cache=True,
             output_hidden_states=True
         )
+
         logits = outputs.logits
         hidden = outputs.hidden_states[-1]
 
         loss = loss_fn(logits, hidden)
-        print(f"[Step {step+1}] Loss: {loss.item()}")
+
+        print(f"[Step {step+1}] Loss:", loss.item())
+        print("[DEBUG] inputs_embeds.requires_grad:", inputs_embeds.requires_grad)
+        print("[DEBUG] logits.requires_grad:", logits.requires_grad)
+        print("[DEBUG] hidden.requires_grad:", hidden.requires_grad)
         print("[DEBUG] loss.requires_grad:", loss.requires_grad)
 
         model.zero_grad()
         if inputs_embeds.grad is not None:
             inputs_embeds.grad.zero_()
-
-        loss.backward(retain_graph=True)  # <-- must retain for multiple steps
+        loss.backward(retain_graph=True)
 
         grads = inputs_embeds.grad
         if grads is None:
-            raise RuntimeError("Gradients are None! Check loss computation.")
+            raise RuntimeError("Gradient is None.")
 
         grad_direction = step_size * grads / (grads.norm() + 1e-10)
-        inputs_embeds = (inputs_embeds + grad_direction).detach().requires_grad_(True)
-
-    # Final logits after perturbation
-    outputs = model(
-        inputs_embeds=inputs_embeds,
-        past_key_values=past,
-        use_cache=True,
-        output_hidden_states=True
-    )
-
-    return outputs.logits
-
-
-
+        inputs_embeds = (inputs_embeds + grad_direction).detach()
+        inputs_embeds.requires_grad_()
+        inputs_embeds.retain_grad()
 
 # === Full generation loop ===
 @torch.no_grad()
