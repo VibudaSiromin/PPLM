@@ -18,51 +18,37 @@ def discrim_loss(hidden, disc_model):
 def perturb_past(model, input_ids, past, loss_fn, steps=3, step_size=0.01):
     device = input_ids.device
 
-    # Get input embeddings instead of input_ids (we need float tensor for gradients)
     inputs_embeds = model.get_input_embeddings()(input_ids)
     inputs_embeds = inputs_embeds.clone().detach().requires_grad_(True)
 
     for step in range(steps):
-        # Forward pass
         outputs = model(
             inputs_embeds=inputs_embeds,
             past_key_values=past,
             use_cache=True,
             output_hidden_states=True
         )
-
         logits = outputs.logits
         hidden = outputs.hidden_states[-1]
 
-        # Compute loss
         loss = loss_fn(logits, hidden)
+        print(f"[Step {step+1}] Loss: {loss.item()}")
+        print("[DEBUG] loss.requires_grad:", loss.requires_grad)
 
-        # Debug print 1: Loss value
-        print(f"[Step {step+1}] Loss: {loss.item():.6f}")
-
-        # Zero gradients
         model.zero_grad()
         if inputs_embeds.grad is not None:
             inputs_embeds.grad.zero_()
 
-        # Backward pass
-        loss.backward(retain_graph=True)
+        loss.backward(retain_graph=True)  # <-- must retain for multiple steps
 
-        # Get gradient
         grads = inputs_embeds.grad
         if grads is None:
-            raise RuntimeError("Gradient is None. Ensure requires_grad is True and computation graph is connected.")
+            raise RuntimeError("Gradients are None! Check loss computation.")
 
-        # Debug print 2: Gradients
-        print(f"[Step {step+1}] Grad norm: {grads.norm().item():.6f}")
-
-        # Gradient ascent update
         grad_direction = step_size * grads / (grads.norm() + 1e-10)
-        inputs_embeds = (inputs_embeds + grad_direction).detach()
-        inputs_embeds.requires_grad_()
-        inputs_embeds.retain_grad()
+        inputs_embeds = (inputs_embeds + grad_direction).detach().requires_grad_(True)
 
-    # Final forward pass with perturbed embeddings
+    # Final logits after perturbation
     outputs = model(
         inputs_embeds=inputs_embeds,
         past_key_values=past,
