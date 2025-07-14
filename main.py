@@ -36,9 +36,9 @@ bow_vec = load_bow_vector(
 
 # === Load Discriminator ===
 if USE_DISC:
-    disc_model = Discriminator().to(device)
     checkpoint = torch.load("discriminator_model.pt", map_location=device)
-    disc_model.load_state_dict(checkpoint['model_state_dict'])  
+    disc_model = Discriminator(hidden_size=model.config.hidden_size).to(device)
+    disc_model.load_state_dict(checkpoint['model_state_dict'])
     disc_model.eval()
 else:
     disc_model = None
