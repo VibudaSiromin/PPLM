@@ -15,57 +15,50 @@ def discrim_loss(hidden, disc_model):
     return F.cross_entropy(logits, labels)
 
 # === Perturb logits ===
-def perturb_past(
-    model,
-    input_ids,
-    past,
-    loss_fn,
-    steps=3,
-    step_size=0.03,
-):
-    device = input_ids.device
+def perturb_past(model, generated, past, loss_fn, steps=5, step_size=0.04):
+    device = generated.device
+
     grad_accumulator = None
-    accumulated_hidden = None
 
     for _ in range(steps):
-        # Get embeddings for the last token only
-        last_token_id = input_ids[:, -1:]
-        inputs_embeds = model.get_input_embeddings()(last_token_id)
-        inputs_embeds = inputs_embeds.detach()
-        inputs_embeds.requires_grad_(True)
+        input_ids = generated[:, -1:]
+        input_embeds = model.get_input_embeddings()(input_ids)
+        input_embeds.requires_grad_(True)
 
-        # Forward with embeddings (instead of input_ids)
         outputs = model(
-            inputs_embeds=inputs_embeds,
+            inputs_embeds=input_embeds,
             past_key_values=past,
             use_cache=True,
-            output_hidden_states=True  # this enables hidden_states
+            output_hidden_states=True
         )
         logits = outputs.logits
-        hidden = outputs.hidden_states[-1]  # Last layer
-        
-        # Compute loss (BoW or discriminator)
+        hidden = outputs.hidden_states[-1]
+
+        # === Compute loss ===
         loss = loss_fn(logits, hidden)
-        loss.backward(retain_graph=True)
 
-        grads = inputs_embeds.grad  # Gradient w.r.t. embedding
+        # === Backprop ===
+        loss.backward()
 
-        if grad_accumulator is None:
-            grad_accumulator = grads.clone()
-        else:
-            grad_accumulator += grads
+        # === Collect gradients ===
+        grads = input_embeds.grad
+        if grads is None:
+            raise RuntimeError("Gradient is None. Did you forget to call .backward()?")
 
-        # Clear memory
-        model.zero_grad()
-        torch.cuda.empty_cache()
+        grad_accumulator = grads.clone()
 
-    # Apply the final perturbation
-    perturbed_embeds = inputs_embeds - step_size * grad_accumulator.sign()
-    perturbed_embeds = perturbed_embeds.detach()
+        # === Update embedding with gradient ===
+        perturbation = step_size * grad_accumulator
+        input_embeds = input_embeds + perturbation.detach()
+        input_embeds.requires_grad_(True)
 
-    # Final forward pass with perturbed embeddings
-    outputs = model(inputs_embeds=perturbed_embeds, past_key_values=past, use_cache=True)
-    return outputs.logits
+    # === Final forward pass after perturbation ===
+    final_outputs = model(
+        inputs_embeds=input_embeds,
+        past_key_values=past,
+        use_cache=True
+    )
+    return final_outputs.logits
 
 
 # === Full generation loop ===
