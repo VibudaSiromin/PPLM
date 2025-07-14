@@ -46,7 +46,7 @@ def perturb_past(
         
         # Compute loss (BoW or discriminator)
         loss = loss_fn(logits, hidden)
-        loss.backward()
+        loss.backward(retain_graph=True)
 
         grads = inputs_embeds.grad  # Gradient w.r.t. embedding
 
