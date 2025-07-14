@@ -128,8 +128,12 @@ def loss_fn(logits, hidden, bow_vec=None, disc_model=None):
         with torch.no_grad():
             pooled_hidden = hidden[:, -1, :]  # Last token's hidden state
         pred = disc_model(pooled_hidden)
-        target = torch.tensor([1], dtype=torch.long).to(logits.device)  # class label
+        target = torch.tensor([1], dtype=torch.long).to(logits.device)
         disc_loss = F.cross_entropy(pred, target)
         losses.append(disc_loss)
+
+    if not losses:
+        # Return a dummy tensor that supports backward
+        return torch.tensor(0.0, device=logits.device, requires_grad=True)
 
     return sum(losses)
