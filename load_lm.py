@@ -14,7 +14,7 @@ def load_lm(model_name):
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         device_map="auto",
-        quantization_config=quant_config,
+        #quantization_config=quant_config,
         trust_remote_code=True
     )
 
