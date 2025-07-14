@@ -12,8 +12,7 @@ MODEL_NAME = "Qwen/Qwen1.5-7B-Chat"  # or "mistralai/Mistral-7B-Instruct-v0.3"
 
 # === Load model in 4-bit ===
 model, tokenizer = load_lm(MODEL_NAME)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = model.to(device)
+device = model.device if hasattr(model, "device") else torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # === GPU cleanup before generation ===
 gc.collect()
