@@ -45,7 +45,7 @@ def perturb_past(model, input_ids, past, loss_fn, steps=3, step_size=0.01):
             if input_embed.grad is not None:
                 input_embed.grad.zero_()
 
-            loss.backward()
+            loss.backward(retain_graph=True)
 
             if input_embed.grad is None:
                 raise RuntimeError("Gradient is still None after backward")
