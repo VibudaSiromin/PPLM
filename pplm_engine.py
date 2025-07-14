@@ -18,13 +18,11 @@ def discrim_loss(hidden, disc_model):
 def perturb_past(model, input_ids, past, loss_fn, steps=3, step_size=0.01):
     device = input_ids.device
 
-    # Get input embeddings instead of using input_ids (integers don't support gradients)
+    # Initial input embeddings
     inputs_embeds = model.get_input_embeddings()(input_ids)
-    inputs_embeds = inputs_embeds.clone().detach().requires_grad_(True)
-    inputs_embeds.requires_grad_()             # Enable gradient tracking
+    inputs_embeds = torch.nn.Parameter(inputs_embeds.clone().detach())  # ensure leaf
 
     for step in range(steps):
-        # Forward pass
         outputs = model(
             inputs_embeds=inputs_embeds,
             past_key_values=past,
@@ -42,18 +40,15 @@ def perturb_past(model, input_ids, past, loss_fn, steps=3, step_size=0.01):
             inputs_embeds.grad.zero_()
         loss.backward()
 
-        # Get gradients and apply perturbation
         grads = inputs_embeds.grad
         if grads is None:
             raise RuntimeError("Gradient is None. Ensure requires_grad is True and computation graph is connected.")
 
-        # Gradient ascent on embeddings
+        # Apply perturbation
         grad_direction = step_size * grads / (grads.norm() + 1e-10)
-        inputs_embeds = (inputs_embeds + grad_direction).detach()
-        inputs_embeds.requires_grad_()
-        inputs_embeds.retain_grad()
+        inputs_embeds = torch.nn.Parameter((inputs_embeds + grad_direction).detach())  # keep it a leaf
 
-    # Final forward pass to get modified logits
+    # Final forward pass
     outputs = model(
         inputs_embeds=inputs_embeds,
         past_key_values=past,
@@ -62,6 +57,7 @@ def perturb_past(model, input_ids, past, loss_fn, steps=3, step_size=0.01):
     )
 
     return outputs.logits
+
 
 
 # === Full generation loop ===
