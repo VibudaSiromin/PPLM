@@ -14,6 +14,9 @@ MODEL_NAME = "Qwen/Qwen1.5-7B-Chat"  # or "mistralai/Mistral-7B-Instruct-v0.3"
 model, tokenizer = load_lm(MODEL_NAME)
 device = model.device if hasattr(model, "device") else torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+# Ensure the embedding layer allows gradient
+model.get_input_embeddings().weight.requires_grad = True
+
 # === GPU cleanup before generation ===
 gc.collect()
 torch.cuda.empty_cache()
