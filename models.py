@@ -1,21 +1,14 @@
 import torch
 from torch import nn
-from transformers import BertModel, AutoModelForCausalLM, AutoTokenizer
 
 class Discriminator(nn.Module):
-    def __init__(self):
+    def __init__(self, hidden_size):
         super().__init__()
-        self.bert = BertModel.from_pretrained("bert-base-uncased")
-        self.dropout = nn.Dropout(0.3)
-        self.classifier = nn.Linear(self.bert.config.hidden_size, 2)
+        self.fc1 = nn.Linear(hidden_size, 128)
+        self.relu = nn.ReLU()
+        self.fc2 = nn.Linear(128, 2)  # 2 classes: older / younger
 
-    def forward(self, input_ids, attention_mask):
-        outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask)
-        cls = self.dropout(outputs.pooler_output)
-        return self.classifier(cls)
-
-def load_lm(model_name):
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, device_map="auto")
-    model.eval()
-    return model, tokenizer
+    def forward(self, hidden_state):
+        x = self.fc1(hidden_state)
+        x = self.relu(x)
+        return self.fc2(x)
