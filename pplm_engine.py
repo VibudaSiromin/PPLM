@@ -20,7 +20,7 @@ def perturb_past(model, input_ids, past, loss_fn, steps=3, step_size=0.01):
 
     # Get input embeddings instead of using input_ids (integers don't support gradients)
     inputs_embeds = model.get_input_embeddings()(input_ids)
-    inputs_embeds.retain_grad()                # So .grad is not None
+    inputs_embeds = inputs_embeds.clone().detach().requires_grad_(True)
     inputs_embeds.requires_grad_()             # Enable gradient tracking
 
     for step in range(steps):
