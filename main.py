@@ -48,7 +48,7 @@ output = generate(
     prompt,
     bow_vec=bow_vec,
     disc_model=disc_model,
-    loss_fn=lambda logits, hidden: base_loss_fn(logits, hidden, bow_vec, disc_model),
+    loss_fn=base_loss_fn,
     steps=5,
     step_size=0.04,
     max_len=60
