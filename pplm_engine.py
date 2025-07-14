@@ -69,47 +69,43 @@ def perturb_past(
 
 
 # === Full generation loop ===
-def generate(model, tokenizer, prompt, bow_vec=None, disc_model=None,
-             steps=1, step_size=0.03, max_len=50):
-    """
-    Generates text using BoW and/or discriminator guidance (PPLM).
-    """
-    device = next(model.parameters()).device
+@torch.no_grad()
+def generate(
+    model, tokenizer, prompt, bow_vec=None, disc_model=None,
+    steps=5, step_size=0.04, max_len=60
+):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Tokenize the initial prompt
+    # === Encode prompt ===
     input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(device)
-    generated = input_ids
-    past = None
+    generated = input_ids.clone()
 
+    # === Generate tokens iteratively ===
     for _ in range(max_len):
-        input_ids = generated[:, -1:]  # last token only
-
-        outputs = model(
-            input_ids=input_ids,
-            past_key_values=past,
-            use_cache=True,
-            output_hidden_states=True
-        )
-
-        logits = outputs.logits
+        # 1. Forward pass to get past_key_values
+        outputs = model(input_ids=generated, use_cache=True, output_hidden_states=True)
         past = outputs.past_key_values
 
-        # Define loss function
-        def loss_fn(logits, hidden):
-            if bow_vec is not None:
-                return bow_loss(logits, bow_vec)
-            elif disc_model is not None:
-                return discrim_loss(hidden, disc_model)
-            else:
-                return torch.tensor(0.0, requires_grad=True).to(device)
+        # 2. Apply perturbation to influence generation
+        logits = perturb_past(
+            model=model,
+            generated=generated,
+            past=past,
+            loss_fn=lambda logits, hidden: loss_fn(logits, hidden, bow_vec, disc_model),
+            steps=steps,
+            step_size=step_size
+        )
 
-        # Apply perturbation only if control method is selected
-        if bow_vec is not None or disc_model is not None:
-            logits = perturb_past(model, generated, past, loss_fn, steps, step_size)
-        else:
-            logits = logits[:, -1:, :]  # unperturbed logits
+        # 3. Sample or take the top token
+        next_token = torch.argmax(logits[:, -1, :], dim=-1, keepdim=True)
 
-        next_token = torch.argmax(logits[:, -1, :], dim=-1).unsqueeze(0)
-        generated = torch.cat([generated, next_token], dim=1)
+        # 4. Append to generated sequence
+        generated = torch.cat((generated, next_token), dim=1)
 
-    return tokenizer.decode(generated[0], skip_special_tokens=True)
+        # Stop if end-of-sequence
+        if next_token.item() == tokenizer.eos_token_id:
+            break
+
+    # === Decode final text ===
+    output_text = tokenizer.decode(generated[0], skip_special_tokens=True)
+    return output_text
