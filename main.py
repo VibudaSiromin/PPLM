@@ -22,8 +22,8 @@ gc.collect()
 torch.cuda.empty_cache()
 
 # === Settings ===
-USE_BOW = True
-USE_DISC = False
+USE_BOW = False
+USE_DISC = True
 TARGET_GROUP = "older"  # or "younger"
 prompt = "The person walked into the room and said"
 
