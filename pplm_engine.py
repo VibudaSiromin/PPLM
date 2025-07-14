@@ -64,8 +64,15 @@ def perturb_past(model, generated, past, loss_fn, steps=5, step_size=0.04):
 # === Full generation loop ===
 @torch.no_grad()
 def generate(
-    model, tokenizer, prompt, bow_vec=None, disc_model=None,
-    steps=5, step_size=0.04, max_len=60
+    model,
+    tokenizer,
+    prompt,
+    bow_vec=None,
+    disc_model=None,
+    loss_fn=None,
+    steps=10,
+    step_size=0.03,
+    max_len=50
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
