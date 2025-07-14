@@ -6,7 +6,6 @@ from models import Discriminator
 from load_lm import load_lm
 from bow_utils import load_bow_vector
 from pplm_engine import generate, loss_fn as base_loss_fn
-from discriminator_loader import load_discriminator
 
 # === Choose base model ===
 MODEL_NAME = "mistralai/Mistral-7B-Instruct-v0.3" # "Qwen/Qwen1.5-7B-Chat" 
@@ -37,7 +36,9 @@ bow_vec = load_bow_vector(
 
 # === Load Discriminator ===
 if USE_DISC:
-    disc_model = load_discriminator(device)
+    disc_model = Discriminator(hidden_size=model.config.hidden_size).to(device)  # ✅ Using previous Discriminator
+    disc_model.load_state_dict(torch.load("discriminator_model.pt", map_location=device))  # ✅ Load saved state
+    disc_model.eval()
 else:
     disc_model = None
 
