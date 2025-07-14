@@ -114,19 +114,17 @@ def loss_fn(logits, hidden, bow_vec=None, disc_model=None):
     losses = []
 
     if bow_vec is not None:
-        # BoW Loss (differentiable)
         probs = F.softmax(logits, dim=-1)
         bow_probs = (probs * bow_vec.to(probs.device)).sum(dim=-1)
         bow_loss = -torch.log(bow_probs + 1e-12).mean()
         losses.append(bow_loss)
 
     if disc_model is not None:
-        # Discriminator Loss — must remain connected to computation graph
-        pooled_hidden = hidden[:, -1, :]  # No torch.no_grad()
+        pooled_hidden = hidden[:, -1, :]  # ✅ No torch.no_grad()
         pred = disc_model(pooled_hidden)
         target = torch.tensor([1], dtype=torch.long).to(logits.device)
         disc_loss = F.cross_entropy(pred, target)
         losses.append(disc_loss)
 
-    total_loss = sum(losses)
-    return total_loss
+    return sum(losses)
+
