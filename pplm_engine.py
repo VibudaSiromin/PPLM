@@ -15,50 +15,53 @@ def discrim_loss(hidden, disc_model):
     return F.cross_entropy(logits, labels)
 
 # === Perturb logits ===
-def perturb_past(model, generated, past, loss_fn, steps=5, step_size=0.04):
-    device = generated.device
+def perturb_past(model, input_ids, past, loss_fn, steps=3, step_size=0.01):
+    device = input_ids.device
 
-    grad_accumulator = None
+    # Get input embeddings instead of using input_ids (integers don't support gradients)
+    inputs_embeds = model.get_input_embeddings()(input_ids)
+    inputs_embeds.retain_grad()                # So .grad is not None
+    inputs_embeds.requires_grad_()             # Enable gradient tracking
 
-    for _ in range(steps):
-        input_ids = generated[:, -1:]
-        input_embeds = model.get_input_embeddings()(input_ids)
-        input_embeds.requires_grad_(True)
-
+    for step in range(steps):
+        # Forward pass
         outputs = model(
-            inputs_embeds=input_embeds,
+            inputs_embeds=inputs_embeds,
             past_key_values=past,
             use_cache=True,
             output_hidden_states=True
         )
+
         logits = outputs.logits
         hidden = outputs.hidden_states[-1]
 
-        # === Compute loss ===
+        # Compute loss and backward
         loss = loss_fn(logits, hidden)
-
-        # === Backprop ===
+        model.zero_grad()
+        if inputs_embeds.grad is not None:
+            inputs_embeds.grad.zero_()
         loss.backward()
 
-        # === Collect gradients ===
-        grads = input_embeds.grad
+        # Get gradients and apply perturbation
+        grads = inputs_embeds.grad
         if grads is None:
-            raise RuntimeError("Gradient is None. Did you forget to call .backward()?")
+            raise RuntimeError("Gradient is None. Ensure requires_grad is True and computation graph is connected.")
 
-        grad_accumulator = grads.clone()
+        # Gradient ascent on embeddings
+        grad_direction = step_size * grads / (grads.norm() + 1e-10)
+        inputs_embeds = (inputs_embeds + grad_direction).detach()
+        inputs_embeds.requires_grad_()
+        inputs_embeds.retain_grad()
 
-        # === Update embedding with gradient ===
-        perturbation = step_size * grad_accumulator
-        input_embeds = input_embeds + perturbation.detach()
-        input_embeds.requires_grad_(True)
-
-    # === Final forward pass after perturbation ===
-    final_outputs = model(
-        inputs_embeds=input_embeds,
+    # Final forward pass to get modified logits
+    outputs = model(
+        inputs_embeds=inputs_embeds,
         past_key_values=past,
-        use_cache=True
+        use_cache=True,
+        output_hidden_states=True
     )
-    return final_outputs.logits
+
+    return outputs.logits
 
 
 # === Full generation loop ===
