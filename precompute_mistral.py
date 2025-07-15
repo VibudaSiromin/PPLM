@@ -7,6 +7,7 @@ from tqdm import tqdm
 # === Load LM ===
 MODEL_NAME = "mistralai/Mistral-7B-Instruct-v0.3"  # or the model you're using in PPLM
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+tokenizer.pad_token = tokenizer.eos_token
 model = AutoModel.from_pretrained(MODEL_NAME).eval().cuda()
 
 # === Load data ===
