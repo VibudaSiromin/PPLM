@@ -25,7 +25,9 @@ torch.cuda.empty_cache()
 USE_BOW = False
 USE_DISC = True
 TARGET_GROUP = "older"  # or "younger"
-prompt = "The person walked into the room and said"
+
+instruction = "I’ve been feeling very anxious and worthless lately. I’ve applied to so many tech jobs, and I haven’t heard back from any. I worked hard on my computer science degree, but now I feel like a failure. I live away from family and don’t have many people to talk to. What should I do?"
+prompt = f"### Instruction:\n{instruction}\n\n### Response:\n"
 
 # === Load BoW ===
 bow_vec = load_bow_vector(
