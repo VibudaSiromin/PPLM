@@ -59,7 +59,7 @@ output = generate(
     loss_fn=base_loss_fn,
     steps=3,
     step_size=0.01,
-    max_len=60
+    max_len=100
 )
 
 print("\n[Generated Text]")
