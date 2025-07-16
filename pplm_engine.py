@@ -84,12 +84,12 @@ def perturb_past(model, input_ids, past, loss_fn, steps=3, step_size=0.01):
     return final_outputs.logits
 
 def generate(model, tokenizer, prompt, bow_vec=None, disc_model=None, loss_fn=None,
-             steps=1, step_size=0.001, max_len=100, top_p=0.9, temperature=1.0):
+             steps=1, step_size=0.001, max_len=100, top_p=0.9, top_k=50, temperature=1.0):
 
     device = next(model.parameters()).device
     input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(device)
+    generated_tokens = set(input_ids[0].tolist())
 
-    # Initial forward pass to get past_key_values
     outputs = model(input_ids=input_ids, use_cache=True, output_hidden_states=True, return_dict=True)
     past = outputs.past_key_values
 
@@ -103,25 +103,37 @@ def generate(model, tokenizer, prompt, bow_vec=None, disc_model=None, loss_fn=No
             step_size=step_size
         )
 
-        logits = logits[:, -1, :] / temperature  # Optional: control creativity
+        logits = logits[:, -1, :] / temperature
 
-        # Nucleus sampling (top-p)
-        probs = F.softmax(logits, dim=-1)
-        sorted_probs, sorted_indices = torch.sort(probs, descending=True)
-        cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
+        # === Repetition Penalty ===
+        for token_id in set(input_ids[0].tolist()):
+            logits[0, token_id] *= 0.8  # penalize repeating same tokens
 
-        # Remove tokens with cumulative probability above threshold
+        # === Top-k Sampling ===
+        if top_k > 0:
+            top_k = min(top_k, logits.shape[-1])
+            top_k_vals, top_k_indices = torch.topk(logits, top_k, dim=-1)
+            logits = torch.full_like(logits, float("-inf"))
+            logits.scatter_(1, top_k_indices, top_k_vals)
+
+        # === Top-p (Nucleus) Sampling ===
+        sorted_logits, sorted_indices = torch.sort(logits, descending=True)
+        cumulative_probs = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)
         sorted_indices_to_remove = cumulative_probs > top_p
         sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
         sorted_indices_to_remove[..., 0] = 0
-
         indices_to_remove = sorted_indices[sorted_indices_to_remove]
-        probs[:, indices_to_remove] = 0
-        probs = probs / probs.sum()  # re-normalize
+        logits[0, indices_to_remove] = -float("inf")
 
+        probs = F.softmax(logits, dim=-1)
         next_token = torch.multinomial(probs, num_samples=1)
-
         input_ids = torch.cat((input_ids, next_token), dim=1)
+
+        # === Early stopping on repeated '### Instruction' ===
+        decoded_text = tokenizer.decode(input_ids[0], skip_special_tokens=True)
+        if decoded_text.count("### Instruction") > 1:
+            print("[Early Stop] Detected repeated Instruction block.")
+            break
 
         if next_token.item() == tokenizer.eos_token_id:
             break
@@ -130,3 +142,4 @@ def generate(model, tokenizer, prompt, bow_vec=None, disc_model=None, loss_fn=No
         past = outputs.past_key_values
 
     return tokenizer.decode(input_ids[0], skip_special_tokens=True)
+
