@@ -29,7 +29,6 @@ TARGET_GROUP = "older"  # or "younger"
 instruction = "Is it normal to feel worthless all the time?"
 prompt = f"### Instruction:\n{instruction}\n\n### Response:\n"
 
-print(f"[BoW shape]: {bow_vec.shape} | model vocab size: {tokenizer.vocab_size}")
 
 # === Load BoW ===
 bow_vec = load_bow_vector(
@@ -37,6 +36,8 @@ bow_vec = load_bow_vector(
     tokenizer,
     expected_vocab_size=model.config.vocab_size
 ).to(device)
+
+print(f"[BoW shape]: {bow_vec.shape} | model vocab size: {tokenizer.vocab_size}")
 
 # === Load Discriminator ===
 if USE_DISC:
