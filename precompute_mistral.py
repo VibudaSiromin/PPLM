@@ -11,7 +11,7 @@ tokenizer.pad_token = tokenizer.eos_token
 model = AutoModel.from_pretrained(MODEL_NAME).eval().cuda()
 
 # === Load data ===
-df = pd.read_csv("textage.csv")[["Sentence", "age_group"]]
+df = pd.read_csv("test.csv")[["Sentence", "age_group"]]
 label2id = {"younger": 0, "older": 1}
 df["label"] = df["age_group"].map(label2id)
 
