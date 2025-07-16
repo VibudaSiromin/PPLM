@@ -59,11 +59,11 @@ output = generate(
     model,
     tokenizer,
     prompt,
-    bow_vec=None,
-    disc_model=None,
+    bow_vec=bow_vec,
+    disc_model=disc_model,
     loss_fn=base_loss_fn,
-    steps=0,
-    step_size=0,
+    steps=3,
+    step_size=0.01,
     max_len=100
 )
 
