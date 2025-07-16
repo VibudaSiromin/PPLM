@@ -22,8 +22,8 @@ gc.collect()
 torch.cuda.empty_cache()
 
 # === Settings ===
-USE_BOW = False
-USE_DISC = True
+USE_BOW = True
+USE_DISC = False
 TARGET_GROUP = "older"  # or "younger"
 
 instruction = "I’ve been feeling very anxious and worthless lately. I’ve applied to so many tech jobs, and I haven’t heard back from any. I worked hard on my computer science degree, but now I feel like a failure. I live away from family and don’t have many people to talk to. What should I do?"
