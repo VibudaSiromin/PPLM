@@ -84,12 +84,12 @@ def perturb_past(model, input_ids, past, loss_fn, steps=3, step_size=0.01):
     return final_outputs.logits
 
 def generate(model, tokenizer, prompt, bow_vec=None, disc_model=None, loss_fn=None,
-             steps=3, step_size=0.01, max_len=60):
+             steps=1, step_size=0.001, max_len=100, top_p=0.9, temperature=1.0):
 
     device = next(model.parameters()).device
     input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(device)
 
-    # First forward pass to get past_key_values
+    # Initial forward pass to get past_key_values
     outputs = model(input_ids=input_ids, use_cache=True, output_hidden_states=True, return_dict=True)
     past = outputs.past_key_values
 
@@ -103,13 +103,29 @@ def generate(model, tokenizer, prompt, bow_vec=None, disc_model=None, loss_fn=No
             step_size=step_size
         )
 
-        next_token = torch.argmax(logits[:, -1, :], dim=-1, keepdim=True)
+        logits = logits[:, -1, :] / temperature  # Optional: control creativity
+
+        # Nucleus sampling (top-p)
+        probs = F.softmax(logits, dim=-1)
+        sorted_probs, sorted_indices = torch.sort(probs, descending=True)
+        cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
+
+        # Remove tokens with cumulative probability above threshold
+        sorted_indices_to_remove = cumulative_probs > top_p
+        sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
+        sorted_indices_to_remove[..., 0] = 0
+
+        indices_to_remove = sorted_indices[sorted_indices_to_remove]
+        probs[:, indices_to_remove] = 0
+        probs = probs / probs.sum()  # re-normalize
+
+        next_token = torch.multinomial(probs, num_samples=1)
+
         input_ids = torch.cat((input_ids, next_token), dim=1)
 
         if next_token.item() == tokenizer.eos_token_id:
             break
 
-        # Update past for next step
         outputs = model(input_ids=input_ids, use_cache=True, return_dict=True)
         past = outputs.past_key_values
 
