@@ -49,6 +49,8 @@ if USE_DISC:
 else:
     disc_model = None
 
+print(f"[BoW vector non-zero entries]: {bow_vec.nonzero().shape[0]}")
+
 # === Generate ===
 output = generate(
     model,
