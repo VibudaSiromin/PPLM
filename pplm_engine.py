@@ -10,7 +10,7 @@ def loss_fn(logits, hidden, bow_vec=None, disc_model=None):
         bow_probs = (probs * bow_vec).sum(dim=-1)
         bow_probs = torch.clamp(bow_probs, min=1e-6)  # Avoid log(0)
         bow_loss = -torch.log(bow_probs).mean()
-        losses.append(bow_loss)
+        losses.append(0.5 * bow_loss)
 
     if disc_model is not None:
         pooled_hidden = hidden[:, -1, :].to(dtype=torch.float32)
