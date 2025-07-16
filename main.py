@@ -27,8 +27,7 @@ USE_DISC = False
 TARGET_GROUP = "younger"  # or "younger"
 
 instruction = "Is it normal to feel worthless all the time?"
-prompt = f"Instruction:\n{instruction}\n\n Response:\n"
-
+prompt = f"### Instruction:\n{instruction}\n\n### Response:\n"
 
 # === Load BoW ===
 bow_vec = load_bow_vector(
