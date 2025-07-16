@@ -29,6 +29,8 @@ TARGET_GROUP = "older"  # or "younger"
 instruction = "Is it normal to feel worthless all the time?"
 prompt = f"### Instruction:\n{instruction}\n\n### Response:\n"
 
+print(f"[BoW shape]: {bow_vec.shape} | model vocab size: {tokenizer.vocab_size}")
+
 # === Load BoW ===
 bow_vec = load_bow_vector(
     f"bow_{TARGET_GROUP}.json",
