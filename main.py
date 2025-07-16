@@ -57,8 +57,8 @@ output = generate(
     bow_vec=None,
     disc_model=None,
     loss_fn=base_loss_fn,
-    steps=3,
-    step_size=0.04,
+    steps=0,
+    step_size=0,
     max_len=100
 )
 
