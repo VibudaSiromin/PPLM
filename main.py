@@ -55,7 +55,7 @@ output = generate(
     tokenizer,
     prompt,
     bow_vec=None,
-    disc_model=disc_model,
+    disc_model=None,
     loss_fn=base_loss_fn,
     steps=3,
     step_size=0.04,
