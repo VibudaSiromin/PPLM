@@ -24,7 +24,7 @@ torch.cuda.empty_cache()
 # === Settings ===
 USE_BOW = True
 USE_DISC = False
-TARGET_GROUP = "older"  # or "younger"
+TARGET_GROUP = "younger"  # or "younger"
 
 instruction = "Is it normal to feel worthless all the time?"
 prompt = f"### Instruction:\n{instruction}\n\n### Response:\n"
