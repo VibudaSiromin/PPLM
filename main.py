@@ -8,7 +8,7 @@ from bow_utils import load_bow_vector
 from pplm_engine import generate, loss_fn as base_loss_fn
 
 # === Choose base model ===
-MODEL_NAME = "mistralai/Mistral-7B-Instruct-v0.3" # "Qwen/Qwen1.5-7B-Chat" 
+MODEL_NAME = "meta-llama/Llama-2-7b-chat-hf" # "Qwen/Qwen1.5-7B-Chat" 
 
 # === Load model in 4-bit ===
 model, tokenizer = load_lm(MODEL_NAME)
