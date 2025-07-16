@@ -40,7 +40,7 @@ print(f"[BoW shape]: {bow_vec.shape} | model vocab size: {tokenizer.vocab_size}"
 
 # === Load Discriminator ===
 if USE_DISC:
-    if "Mistral" in MODEL_NAME:
+    if "Vibuda" in MODEL_NAME:
         checkpoint = torch.load("discriminator_mistral.pt", map_location=device)
     elif "llama" in MODEL_NAME:
         checkpoint = torch.load("discriminator_llama.pt", map_location=device)
