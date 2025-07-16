@@ -6,19 +6,21 @@ def loss_fn(logits, hidden, bow_vec=None, disc_model=None):
 
     if bow_vec is not None:
         probs = F.softmax(logits, dim=-1)
-        bow_probs = (probs * bow_vec.to(probs.device)).sum(dim=-1)
-        bow_loss = -torch.log(bow_probs + 1e-12).mean()
+        bow_vec = bow_vec.to(probs.dtype)  # Match dtype to avoid silent detachment
+        bow_probs = (probs * bow_vec).sum(dim=-1)
+        bow_probs = torch.clamp(bow_probs, min=1e-6)  # Avoid log(0)
+        bow_loss = -torch.log(bow_probs).mean()
         losses.append(bow_loss)
 
     if disc_model is not None:
-        pooled_hidden = hidden[:, -1, :]
-        pooled_hidden = pooled_hidden.to(dtype=torch.float32)  # <- ADD THIS
+        pooled_hidden = hidden[:, -1, :].to(dtype=torch.float32)
         pred = disc_model(pooled_hidden)
         target = torch.tensor([1], dtype=torch.long).to(logits.device)
         disc_loss = F.cross_entropy(pred, target)
         losses.append(disc_loss)
 
     return sum(losses)
+
 
 def perturb_past(model, input_ids, past, loss_fn, steps=3, step_size=0.01):
     device = input_ids.device
