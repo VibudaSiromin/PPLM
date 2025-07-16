@@ -8,7 +8,7 @@ from bow_utils import load_bow_vector
 from pplm_engine import generate, loss_fn as base_loss_fn
 
 # === Choose base model ===
-MODEL_NAME = "Vibuda/muzibot_q" # "Qwen/Qwen1.5-7B-Chat" 
+MODEL_NAME = "mistralai/Mistral-7B-Instruct-v0.3" # "Qwen/Qwen1.5-7B-Chat" 
 
 # === Load model in 4-bit ===
 model, tokenizer = load_lm(MODEL_NAME)
@@ -40,7 +40,7 @@ print(f"[BoW shape]: {bow_vec.shape} | model vocab size: {tokenizer.vocab_size}"
 
 # === Load Discriminator ===
 if USE_DISC:
-    if "Vibuda" in MODEL_NAME:
+    if "Mistral" in MODEL_NAME:
         checkpoint = torch.load("discriminator_mistral.pt", map_location=device)
     elif "llama" in MODEL_NAME:
         checkpoint = torch.load("discriminator_llama.pt", map_location=device)
