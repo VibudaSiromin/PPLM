@@ -33,7 +33,7 @@ for _, row in tqdm(df.iterrows(), total=len(df)):
 X = torch.stack(hidden_states)  # [num_samples, hidden_size]
 y = torch.tensor(labels)
 
-torch.save(X, "train_hidden_states_llama.pt")
-torch.save(y, "train_labels_llama.pt")
+torch.save(X, "train_hidden_states_qwen.pt")
+torch.save(y, "train_labels_qwen.pt")
 
 print("✅ Saved hidden states and labels.")
