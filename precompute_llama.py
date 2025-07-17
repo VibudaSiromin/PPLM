@@ -5,10 +5,10 @@ from transformers import AutoTokenizer, AutoModel
 from tqdm import tqdm
 
 # === Load LM ===
-MODEL_NAME = "meta-llama/Llama-2-7b-chat-hf"  # or the model you're using in PPLM
+MODEL_NAME = "Qwen/Qwen1.5-7B-Chat"  
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 tokenizer.pad_token = tokenizer.eos_token
-model = AutoModel.from_pretrained(MODEL_NAME).eval().cuda()
+model = AutoModel.from_pretrained(MODEL_NAME, torch_dtype=torch.float16).eval().cuda()
 
 # === Load data ===
 df = pd.read_csv("test.csv")[["Sentence", "age_group"]]
