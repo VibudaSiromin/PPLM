@@ -27,7 +27,7 @@ USE_DISC = False
 TARGET_GROUP = "younger"  # or "younger"
 
 question = "Is it normal to feel worthless all the time?"
-prompt = f"[INST] {question} [/INST]"
+prompt = f"[INST] {question} [/INST]\nResponse:"
 
 # === Load BoW ===
 bow_vec = load_bow_vector(
