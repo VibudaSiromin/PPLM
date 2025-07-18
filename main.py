@@ -26,8 +26,8 @@ USE_BOW = False
 USE_DISC = True
 TARGET_GROUP = "younger"  # or "younger"
 
-instruction = "Is it normal to feel worthless all the time?"
-prompt = f"### Instruction:\n{instruction}\n\n### Response:\n"
+question = "Is it normal to feel worthless all the time?"
+prompt = f"[INST] {question} [/INST]"
 
 # === Load BoW ===
 bow_vec = load_bow_vector(
@@ -62,7 +62,7 @@ output = generate(
     disc_model=disc_model,
     loss_fn=base_loss_fn,
     steps=1,           
-    step_size=0.0001,    
+    step_size=0.001,    
     max_len=100,
     top_k=50,
     top_p=0.9,          
