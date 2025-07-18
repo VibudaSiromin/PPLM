@@ -29,7 +29,7 @@ for epoch in range(epochs):
 
     loop = tqdm(dataloader, desc=f"Epoch {epoch+1}")
     for batch_X, batch_y in loop:
-        batch_X, batch_y = batch_X.to(device).half(), batch_y.to(device)
+        batch_X, batch_y = batch_X.to(device), batch_y.to(device)
 
         optimizer.zero_grad()
         logits = model(batch_X)
