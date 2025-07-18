@@ -1,0 +1,62 @@
+import json
+import numpy as np
+from collections import Counter
+
+# Load texts from a JSON file
+def load_texts_from_json(json_path, text_key="text"):
+    with open(json_path, 'r') as f:
+        data = json.load(f)
+    if isinstance(data, list):
+        return [item[text_key] if isinstance(item, dict) else item for item in data]
+    elif isinstance(data, dict):
+        return [data[text_key]]  # Single entry
+    else:
+        raise ValueError("JSON must be a list or a dictionary with text entries.")
+
+def calculate_diversity(text, n=1):
+    tokens = text.split()  # Simple tokenizer (replace with SpaCy/NLTK if needed)
+    if len(tokens) < n:
+        return 0.0
+    ngrams = zip(*[tokens[i:] for i in range(n)])
+    total_ngrams = len(tokens) - n + 1
+    unique_ngrams = Counter(ngrams)
+    return len(unique_ngrams) / total_ngrams
+
+def compute_avg_diversity(texts, n=1):
+    diversities = []
+    for text in texts:
+        try:
+            div = calculate_diversity(text, n)
+            diversities.append(div)
+        except Exception as e:
+            print(f"Error processing text: '{text[:50]}...' | Error: {e}")
+            continue
+
+    if not diversities:
+        return 0.0, 0.0, []  # Handle empty cases gracefully
+
+    avg_div = np.mean(diversities)
+    std_error = np.std(diversities, ddof=1) / np.sqrt(len(diversities))
+    return avg_div, std_error, diversities
+
+# Example Usage
+json_path = "texts.json"  # Replace with your JSON file path
+texts = load_texts_from_json(json_path)
+
+results = {}
+for n in [1, 2, 3]:
+    avg_div, std_error, all_div = compute_avg_diversity(texts, n)
+    results[f"Dist-{n}"] = {
+        "average": avg_div,
+        "std_error": std_error,
+        "all_values": all_div
+    }
+
+# Print results
+print("Diversity Metrics (Average ± Standard Error)")
+for metric, data in results.items():
+    print(f"{metric}: {data['average']:.4f} ± {data['std_error']:.4f}")
+
+# Optional: Save results to JSON
+with open("diversity_results.json", 'w') as f:
+    json.dump(results, f, indent=2)
