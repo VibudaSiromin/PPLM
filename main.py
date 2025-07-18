@@ -22,8 +22,8 @@ gc.collect()
 torch.cuda.empty_cache()
 
 # === Settings ===
-USE_BOW = False
-USE_DISC = True
+USE_BOW = True
+USE_DISC = False
 TARGET_GROUP = "younger"  # or "younger"
 
 question = "Is it normal to feel worthless all the time?"
