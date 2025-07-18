@@ -18,7 +18,6 @@ dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = Discriminator(hidden_size=hidden_size).to(device)
-model = model.half() 
 optimizer = optim.Adam(model.parameters(), lr=1e-4)
 loss_fn = nn.CrossEntropyLoss()
 
