@@ -1,5 +1,6 @@
 import torch
 import torch.nn.functional as F
+from transformers import LogitsProcessorList, RepetitionPenaltyLogitsProcessor
 
 def loss_fn(logits, hidden, bow_vec=None, disc_model=None, disc_target=None):
     losses = []
@@ -19,14 +20,12 @@ def loss_fn(logits, hidden, bow_vec=None, disc_model=None, disc_target=None):
         losses.append(disc_loss)
 
     if len(losses) == 0:
-        # Return dummy loss connected to graph so gradients flow
-        return logits.mean()
+        return logits.mean()  # Ensure connection to computation graph
 
     return sum(losses)
 
-def perturb_past(model, input_ids, past, loss_fn, steps=3, step_size=0.01):
+def perturb_past(model, input_ids, past, loss_fn, steps=3, step_size=0.0001):
     device = input_ids.device
-
     inputs_embeds = model.get_input_embeddings()(input_ids)
     inputs_embeds = inputs_embeds.clone().detach().requires_grad_(True)
 
@@ -58,8 +57,13 @@ def perturb_past(model, input_ids, past, loss_fn, steps=3, step_size=0.01):
             raise RuntimeError("No gradients on inputs_embeds.")
 
         grad_norm = grads.norm()
-        if torch.isnan(grad_norm):
-            raise ValueError("NaN in gradients.")
+        if torch.isnan(grad_norm) or torch.isinf(grad_norm):
+            raise ValueError("NaN or Inf in gradients.")
+
+        # Optional: clip gradient
+        max_norm = 5.0
+        if grad_norm > max_norm:
+            grads = grads * (max_norm / grad_norm)
 
         inputs_embeds = (inputs_embeds + step_size * grads / (grad_norm + 1e-10)).detach()
         inputs_embeds.requires_grad_()
@@ -75,17 +79,18 @@ def perturb_past(model, input_ids, past, loss_fn, steps=3, step_size=0.01):
 
     return final_outputs.logits
 
-
 def generate(model, tokenizer, prompt, bow_vec=None, disc_model=None, loss_fn=None,
-             disc_target=1, steps=1, step_size=0.001, max_len=100,
+             disc_target=1, steps=1, step_size=0.0001, max_len=100,
              top_p=0.9, top_k=50, temperature=1.0):
 
     device = next(model.parameters()).device
     input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(device)
-
-    generated_tokens = set(input_ids[0].tolist())
     outputs = model(input_ids=input_ids, use_cache=True, output_hidden_states=True, return_dict=True)
     past = outputs.past_key_values
+
+    logits_processor = LogitsProcessorList([
+        RepetitionPenaltyLogitsProcessor(penalty=1.2)
+    ])
 
     for _ in range(len(prompt.split()), max_len):
         logits = perturb_past(
@@ -98,19 +103,18 @@ def generate(model, tokenizer, prompt, bow_vec=None, disc_model=None, loss_fn=No
         )
 
         logits = logits[:, -1, :] / temperature
+        logits = torch.clamp(logits, -50, 50)  # avoid softmax overflow
 
-        # Repetition penalty
-        for token_id in set(input_ids[0].tolist()):
-            logits[0, token_id] *= 0.8
+        logits = logits_processor(input_ids, logits)
 
-        # Top-k filtering
+        # Top-k sampling
         if top_k > 0:
-            top_k_vals, top_k_indices = torch.topk(logits, top_k)
-            mask = torch.full_like(logits, float("-inf"))
-            mask.scatter_(1, top_k_indices, top_k_vals)
-            logits = mask
+            top_k_vals, top_k_indices = torch.topk(logits, top_k, dim=-1)
+            top_k_mask = torch.full_like(logits, float("-inf"))
+            top_k_mask.scatter_(1, top_k_indices, top_k_vals)
+            logits = top_k_mask
 
-        # Top-p (nucleus) filtering
+        # Top-p sampling
         sorted_logits, sorted_indices = torch.sort(logits, descending=True)
         probs = F.softmax(sorted_logits, dim=-1)
         cumulative_probs = torch.cumsum(probs, dim=-1)
@@ -120,14 +124,14 @@ def generate(model, tokenizer, prompt, bow_vec=None, disc_model=None, loss_fn=No
         indices_to_remove = sorted_indices[sorted_indices_to_remove]
         logits[0, indices_to_remove] = float("-inf")
 
-        # Sample
         probs = F.softmax(logits, dim=-1)
         next_token = torch.multinomial(probs, num_samples=1)
-        input_ids = torch.cat([input_ids, next_token], dim=-1)
+        input_ids = torch.cat([input_ids, next_token], dim=1)
 
-        decoded_text = tokenizer.decode(input_ids[0], skip_special_tokens=True)
-        if decoded_text.count("### Instruction") > 1:
-            print("[Early Stop] Detected repeated Instruction block.")
+        # Early stopping if [INST] appears again in tail
+        decoded_tail = tokenizer.decode(input_ids[0][-10:], skip_special_tokens=True)
+        if "[INST]" in decoded_tail:
+            print("[Early Stop] [INST] detected in tail.")
             break
 
         if next_token.item() == tokenizer.eos_token_id:
@@ -136,6 +140,7 @@ def generate(model, tokenizer, prompt, bow_vec=None, disc_model=None, loss_fn=No
         outputs = model(input_ids=input_ids, use_cache=True, return_dict=True)
         past = outputs.past_key_values
 
-    return tokenizer.decode(input_ids[0], skip_special_tokens=True)
+    return tokenizer.decode(input_ids[0], skip_special_tokens=True, clean_up_tokenization_spaces=True)
+
 
 
