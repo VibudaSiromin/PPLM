@@ -7,8 +7,7 @@ def loss_fn(logits, hidden, bow_vec=None, disc_model=None, disc_target=None):
     if bow_vec is not None:
         probs = F.softmax(logits, dim=-1)
         bow_vec = bow_vec.to(probs.dtype)
-        bow_probs = (probs * bow_vec).sum(dim=-1)  # shape: (batch_size, seq_len)
-        bow_probs = torch.clamp(bow_probs, min=1e-6)  # prevent log(0)
+        bow_probs = (probs * bow_vec).sum(dim=-1) + 1e-8
         bow_loss = -torch.log(bow_probs).mean()
         losses.append(0.5 * bow_loss)
 
@@ -19,8 +18,10 @@ def loss_fn(logits, hidden, bow_vec=None, disc_model=None, disc_target=None):
         disc_loss = F.cross_entropy(pred, target)
         losses.append(disc_loss)
 
-    return sum(losses)
+    if len(losses) == 0:
+        return torch.tensor(0.0, requires_grad=True, device=logits.device)
 
+    return sum(losses)
 
 def perturb_past(model, input_ids, past, loss_fn, steps=3, step_size=0.01):
     device = input_ids.device
