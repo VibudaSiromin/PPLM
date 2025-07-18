@@ -8,8 +8,19 @@ def loss_fn(logits, hidden, bow_vec=None, disc_model=None, disc_target=None):
     if bow_vec is not None:
         probs = F.softmax(logits, dim=-1)
         bow_vec = bow_vec.to(probs.dtype)
-        bow_probs = (probs * bow_vec).sum(dim=-1) + 1e-8
+
+        bow_probs = (probs * bow_vec).sum(dim=-1)
+
+        print("[DEBUG] BoW probs stats:")
+        print("  min:", bow_probs.min().item())
+        print("  max:", bow_probs.max().item())
+        print("  mean:", bow_probs.mean().item())
+
+        # Clamp to avoid log(0) and gradient explosion
+        bow_probs = torch.clamp(bow_probs, min=1e-4)
         bow_loss = -torch.log(bow_probs).mean()
+
+        print(f"[DEBUG] BoW loss: {bow_loss.item()}")
         losses.append(0.5 * bow_loss)
 
     if disc_model is not None and disc_target is not None:
@@ -17,14 +28,19 @@ def loss_fn(logits, hidden, bow_vec=None, disc_model=None, disc_target=None):
         pred = disc_model(pooled_hidden)
         target = torch.tensor([disc_target] * pred.size(0), dtype=torch.long).to(pred.device)
         disc_loss = F.cross_entropy(pred, target)
+
+        print(f"[DEBUG] Discriminator loss: {disc_loss.item()}")
         losses.append(disc_loss)
 
     if len(losses) == 0:
-        return logits.mean()  # Ensure connection to computation graph
+        # Dummy differentiable loss if everything is off
+        return logits.mean()
 
-    return sum(losses)
+    total_loss = sum(losses)
+    print(f"[DEBUG] Total loss: {total_loss.item()}")
+    return total_loss
 
-def perturb_past(model, input_ids, past, loss_fn, steps=3, step_size=0.0001):
+def perturb_past(model, input_ids, past, loss_fn, steps=3, step_size=0.00005):
     device = input_ids.device
     inputs_embeds = model.get_input_embeddings()(input_ids)
     inputs_embeds = inputs_embeds.clone().detach().requires_grad_(True)
@@ -57,12 +73,15 @@ def perturb_past(model, input_ids, past, loss_fn, steps=3, step_size=0.0001):
             raise RuntimeError("No gradients on inputs_embeds.")
 
         grad_norm = grads.norm()
+        print(f"[DEBUG] Step {step+1}: Loss={loss.item():.6f}, Grad norm={grad_norm.item():.6f}")
+
         if torch.isnan(grad_norm) or torch.isinf(grad_norm):
             raise ValueError("NaN or Inf in gradients.")
 
-        # Optional: clip gradient
+        # Optional: clip large gradients
         max_norm = 5.0
         if grad_norm > max_norm:
+            print(f"[DEBUG] Clipping gradient from {grad_norm.item()} to {max_norm}")
             grads = grads * (max_norm / grad_norm)
 
         inputs_embeds = (inputs_embeds + step_size * grads / (grad_norm + 1e-10)).detach()
