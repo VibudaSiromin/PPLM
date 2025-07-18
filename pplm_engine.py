@@ -5,6 +5,7 @@ from transformers import LogitsProcessorList, RepetitionPenaltyLogitsProcessor
 def loss_fn(logits, hidden, bow_vec=None, disc_model=None, disc_target=None):
     losses = []
 
+    # === BoW loss ===
     if bow_vec is not None:
         probs = F.softmax(logits, dim=-1)
         bow_vec = bow_vec.to(probs.dtype)
@@ -16,24 +17,36 @@ def loss_fn(logits, hidden, bow_vec=None, disc_model=None, disc_target=None):
         print("  max:", bow_probs.max().item())
         print("  mean:", bow_probs.mean().item())
 
-        # Clamp to avoid log(0) and gradient explosion
-        bow_probs = torch.clamp(bow_probs, min=1e-4)
+        bow_probs = torch.clamp(bow_probs, min=1e-4)  # safer lower bound
         bow_loss = -torch.log(bow_probs).mean()
 
         print(f"[DEBUG] BoW loss: {bow_loss.item()}")
         losses.append(0.5 * bow_loss)
 
+    # === Discriminator loss ===
     if disc_model is not None and disc_target is not None:
         pooled_hidden = hidden[:, -1, :].to(dtype=torch.float32)
+
+        if torch.isnan(pooled_hidden).any() or torch.isinf(pooled_hidden).any():
+            raise ValueError("[ERROR] pooled_hidden contains NaN or Inf")
+
         pred = disc_model(pooled_hidden)
+
+        if torch.isnan(pred).any() or torch.isinf(pred).any():
+            raise ValueError("[ERROR] Discriminator output contains NaN or Inf")
+
         target = torch.tensor([disc_target] * pred.size(0), dtype=torch.long).to(pred.device)
+
         disc_loss = F.cross_entropy(pred, target)
+
+        if torch.isnan(disc_loss) or torch.isinf(disc_loss):
+            raise ValueError("[ERROR] Discriminator loss is NaN/Inf")
 
         print(f"[DEBUG] Discriminator loss: {disc_loss.item()}")
         losses.append(disc_loss)
 
+    # === Fallback dummy loss if none used ===
     if len(losses) == 0:
-        # Dummy differentiable loss if everything is off
         return logits.mean()
 
     total_loss = sum(losses)
