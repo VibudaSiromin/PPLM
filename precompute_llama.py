@@ -5,7 +5,7 @@ from transformers import AutoTokenizer, AutoModel
 from tqdm import tqdm
 
 # === Load LM ===
-MODEL_NAME = "meta-llama/Llama-2-7b-chat-hf"  
+MODEL_NAME = "Vibuda/llama_trained"  
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = "right"  # Ensure padding is on the right
