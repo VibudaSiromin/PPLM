@@ -8,7 +8,8 @@ from tqdm import tqdm
 MODEL_NAME = "meta-llama/Llama-2-7b-chat-hf"  
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 tokenizer.pad_token = tokenizer.eos_token
-model = AutoModel.from_pretrained(MODEL_NAME).eval().cuda()
+tokenizer.padding_side = "right"  # Ensure padding is on the right
+model = AutoModel.from_pretrained(MODEL_NAME, torch_dtype=torch.float16).eval().cuda()
 
 # === Load data ===
 df = pd.read_csv("test.csv")[["Sentence", "age_group"]]
@@ -33,7 +34,7 @@ for _, row in tqdm(df.iterrows(), total=len(df)):
 X = torch.stack(hidden_states)  # [num_samples, hidden_size]
 y = torch.tensor(labels)
 
-torch.save(X, "train_hidden_states.pt")
-torch.save(y, "train_labels.pt")
+torch.save(X, "train_hidden_states_llama.pt")
+torch.save(y, "train_labels_llama.pt")
 
 print("✅ Saved hidden states and labels.")
