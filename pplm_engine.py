@@ -115,7 +115,7 @@ def generate(model, tokenizer, prompt, bow_vec=None, disc_model=None, loss_fn=No
         probs = F.softmax(sorted_logits, dim=-1)
         cumulative_probs = torch.cumsum(probs, dim=-1)
         sorted_indices_to_remove = cumulative_probs > top_p
-        sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1]
+        sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
         sorted_indices_to_remove[..., 0] = 0
         indices_to_remove = sorted_indices[sorted_indices_to_remove]
         logits[0, indices_to_remove] = float("-inf")
