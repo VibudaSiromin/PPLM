@@ -3,22 +3,28 @@ import torch.nn.functional as F
 
 def loss_fn(logits, hidden, bow_vec=None, disc_model=None):
     losses = []
-
+    
     if bow_vec is not None:
         probs = F.softmax(logits, dim=-1)
-        bow_vec = bow_vec.to(probs.dtype)  # Match dtype to avoid silent detachment
+        bow_vec = bow_vec.to(probs.dtype)
+        # Add safety checks
+        if torch.isnan(probs).any():
+            probs = torch.nan_to_num(probs, nan=0.0)
+        if torch.isnan(bow_vec).any():
+            bow_vec = torch.nan_to_num(bow_vec, nan=0.0)
+            
         bow_probs = (probs * bow_vec).sum(dim=-1)
-        bow_probs = torch.clamp(bow_probs, min=1e-6)  # Avoid log(0)
+        bow_probs = torch.clamp(bow_probs, min=1e-12)  # More conservative min value
         bow_loss = -torch.log(bow_probs).mean()
-        losses.append(0.5 * bow_loss)
-
+        losses.append(0.1 * bow_loss)  # Reduced weight
+    
     if disc_model is not None:
         pooled_hidden = hidden[:, -1, :].to(dtype=torch.float32)
         pred = disc_model(pooled_hidden)
         target = torch.tensor([1], dtype=torch.long).to(logits.device)
         disc_loss = F.cross_entropy(pred, target)
         losses.append(disc_loss)
-
+    
     return sum(losses)
 
 
