@@ -64,8 +64,8 @@ output = generate(
     steps=0,           
     step_size=0.001,    
     max_len=100,
-    top_k=50,
-    top_p=0.9,          
+    top_k=100,
+    top_p=0.95,          
     temperature=1.0  
 )
 
