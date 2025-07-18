@@ -5,34 +5,34 @@ def loss_fn(logits, hidden, bow_vec=None, disc_model=None):
     losses = []
     
     if bow_vec is not None:
-        print("[DEBUG] Checking bow_vec:", torch.any(torch.isnan(bow_vec)))
         probs = F.softmax(logits, dim=-1)
-        print("[DEBUG] Initial probs:", torch.any(torch.isnan(probs)))
-        
         bow_vec = bow_vec.to(probs.dtype)
         bow_probs = (probs * bow_vec).sum(dim=-1)
-        print("[DEBUG] bow_probs:", torch.any(torch.isnan(bow_probs)))
-        
         bow_probs = torch.clamp(bow_probs, min=1e-12)
         bow_loss = -torch.log(bow_probs).mean()
-        print("[DEBUG] bow_loss:", torch.any(torch.isnan(bow_loss)))
         losses.append(0.1 * bow_loss)
     
     if disc_model is not None:
         pooled_hidden = hidden[:, -1, :].to(dtype=torch.float32)
-        print("[DEBUG] pooled_hidden:", torch.any(torch.isnan(pooled_hidden)))
+        
+        # Add input normalization
+        pooled_hidden = torch.nn.functional.normalize(pooled_hidden, p=2, dim=-1)
+        
+        with torch.no_grad():  # First check discriminator stability
+            test_pred = disc_model(pooled_hidden)
+            if torch.isnan(test_pred).any():
+                print("Discriminator produced NaN during test!")
+                return torch.tensor(0.0, requires_grad=True)
         
         pred = disc_model(pooled_hidden)
-        print("[DEBUG] disc_pred:", torch.any(torch.isnan(pred)))
+        pred = torch.nan_to_num(pred, nan=0.0)  # Safety
         
         target = torch.tensor([1], dtype=torch.long).to(logits.device)
         disc_loss = F.cross_entropy(pred, target)
-        print("[DEBUG] disc_loss:", torch.any(torch.isnan(disc_loss)))
         losses.append(disc_loss)
     
     total_loss = sum(losses)
-    print("[DEBUG] total_loss:", torch.any(torch.isnan(total_loss)))
-    return total_loss
+    return torch.nan_to_num(total_loss, nan=0.0)
 
 
 def perturb_past(model, input_ids, past, loss_fn, steps=3, step_size=0.01):
