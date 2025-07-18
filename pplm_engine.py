@@ -19,7 +19,8 @@ def loss_fn(logits, hidden, bow_vec=None, disc_model=None, disc_target=None):
         losses.append(disc_loss)
 
     if len(losses) == 0:
-        return torch.tensor(0.0, requires_grad=True, device=logits.device)
+        # Return dummy loss connected to graph so gradients flow
+        return logits.mean()
 
     return sum(losses)
 
