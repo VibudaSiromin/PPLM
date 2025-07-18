@@ -38,20 +38,29 @@ bow_vec = load_bow_vector(
 
 print(f"[BoW shape]: {bow_vec.shape} | model vocab size: {tokenizer.vocab_size}")
 
+disc_model = Discriminator(hidden_size=model.config.hidden_size).to(device)
+
 # === Load Discriminator ===
 if USE_DISC:
     if "qwen" in MODEL_NAME:
         checkpoint = torch.load("discriminator_qwen.pt", map_location=device)
     elif "llama" in MODEL_NAME:
         checkpoint = torch.load("discriminator_llama.pt", map_location=device)
+    else:
+        raise ValueError(f"No checkpoint mapping defined for model: {MODEL_NAME}")
         
-    disc_model = Discriminator(hidden_size=model.config.hidden_size).to(device)
     disc_model.load_state_dict(checkpoint['model_state_dict'])
     disc_model.eval()
 else:
     disc_model = None
 
 print(f"[BoW vector non-zero entries]: {bow_vec.nonzero().shape[0]}")
+
+for name, param in disc_model.named_parameters():
+    if torch.isnan(param).any() or torch.isinf(param).any():
+        raise ValueError(f"[ERROR] Discriminator weight '{name}' contains NaN or Inf")
+
+print("[DEBUG] Discriminator model loaded successfully.")
 
 # === Generate ===
 output = generate(
