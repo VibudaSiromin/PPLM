@@ -8,7 +8,7 @@ from models import Discriminator  # simple MLP version
 from tqdm import tqdm
 
 # === Load hidden states & labels ===
-X = torch.load("train_hidden_states_llama.pt")  # [N, hidden_size]
+X = torch.load("train_hidden_states_llama.pt").float()  # [N, hidden_size]
 y = torch.load("train_labels_llama.pt")         # [N]
 hidden_size = X.size(1)
 
