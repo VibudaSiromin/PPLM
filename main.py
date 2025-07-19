@@ -57,11 +57,11 @@ else:
 
 print(f"[BoW vector non-zero entries]: {bow_vec.nonzero().shape[0]}")
 
-for name, param in disc_model.named_parameters():
-    if torch.isnan(param).any() or torch.isinf(param).any():
-        raise ValueError(f"[ERROR] Discriminator weight '{name}' contains NaN or Inf")
-
-print("[DEBUG] Discriminator model loaded successfully.")
+if disc_model is not None:
+    for name, param in disc_model.named_parameters():
+        if torch.isnan(param).any() or torch.isinf(param).any():
+            raise ValueError(f"[ERROR] Discriminator weight '{name}' contains NaN or Inf")
+    print("[DEBUG] Discriminator model loaded successfully.")
 
 # === Generate ===
 output = generate(
