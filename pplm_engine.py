@@ -115,6 +115,7 @@ def generate(model, tokenizer, prompt, bow_vec=None, disc_model=None, loss_fn=No
              disc_target=1, steps=1, step_size=0.0001, max_len=100,
              top_p=0.9, top_k=50, temperature=1.0):
 
+    print("[DEBUG] disc_target:", disc_target)
     device = next(model.parameters()).device
     input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(device)
     outputs = model(input_ids=input_ids, use_cache=True, output_hidden_states=True, return_dict=True)
