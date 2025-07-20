@@ -12,7 +12,7 @@ tokenizer.padding_side = "right"  # Ensure padding is on the right
 model = AutoModel.from_pretrained(MODEL_NAME, torch_dtype=torch.float16).eval().cuda()
 
 # === Load data ===
-df = pd.read_csv("test.csv")[["Sentence", "age_group"]]
+df = pd.read_csv("textage.csv")[["Sentence", "age_group"]]
 label2id = {"younger": 0, "older": 1}
 df["label"] = df["age_group"].map(label2id)
 
