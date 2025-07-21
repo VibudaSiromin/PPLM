@@ -82,3 +82,16 @@ output = generate(
 
 print("\n[Generated Text]")
 print(output)
+
+# === Save to file ===
+output_file = f"Angry_{TARGET_GROUP}_USE_BOW_{USE_BOW}_USE_DISC_{USE_DISC}.txt"
+
+# Write the prompt and response to the file with clear separation
+with open(output_file, "a", encoding="utf-8") as f:
+    # Add two newlines before each new entry if file is not empty
+    if f.tell() > 0:  # Check if file is not empty
+        f.write("\n\n")
+    f.write(f"\n=== Response ===\n{output}\n")
+    f.write("-" * 50)  # Add a separator
+
+print(f"\nResponse appended to {output_file} (new entry on separate lines)")
