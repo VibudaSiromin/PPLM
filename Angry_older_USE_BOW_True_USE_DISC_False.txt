@@ -39,3 +39,9 @@ Response: How do you know that nobody takes
 [INST] Why does nobody take me seriously no matter how loud I speak up? [/INST]
 Response: � If you feel like nobody listens,If this is a recurring issue with people in your life then it may be worth looking into whether there are any underlying issues. 
 --------------------------------------------------
+
+
+=== Response ===
+[INST] Why does nobody take me seriously no matter how loud I speak up? [/INST]
+Response: � If you are having trouble getting your point across, the first thing to consider is whether you're speaking in a way that others can understand.People respond more favorably when they feel heard and understood
+--------------------------------------------------
