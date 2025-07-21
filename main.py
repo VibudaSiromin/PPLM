@@ -27,7 +27,7 @@ USE_DISC = True
 TARGET_GROUP = "older"  # or "younger"
 disc_target = 0 if TARGET_GROUP == "younger" else 1
 
-question = "I’m sick of being blamed for things I didn’t even do.😠😠"
+question = "Why does nobody take me seriously no matter how loud I speak up?"
 prompt = f"[INST] {question} [/INST]\nResponse:"
 
 # === Load BoW ===
