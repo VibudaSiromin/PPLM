@@ -12,7 +12,7 @@ model = AutoModel.from_pretrained(llama_name).to(device).eval()
 
 # Load Discriminator
 discriminator = Discriminator(hidden_size=4096).to(device)  # Adjust hidden_size if needed
-checkpoint = torch.load("discriminator_llama.pt", map_location=device)
+checkpoint = torch.load("discriminator_llama.pt", map_location=device, weights_only=False)
 discriminator.load_state_dict(checkpoint['model_state_dict'])
 discriminator.eval()
 
