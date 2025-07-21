@@ -28,7 +28,7 @@ TARGET_GROUP = "older"  # or "younger"
 disc_target = 0 if TARGET_GROUP == "younger" else 1
 
 question = "Why does nobody take me seriously no matter how loud I speak up?"
-prompt = f"[INST] {question} [/INST]\nResponse:"
+prompt = f"{question}"
 
 # === Load BoW ===
 bow_vec = load_bow_vector(
