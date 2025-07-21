@@ -161,10 +161,9 @@ def generate(model, tokenizer, prompt, bow_vec=None, disc_model=None, loss_fn=No
         next_token = torch.multinomial(probs, num_samples=1)
         input_ids = torch.cat([input_ids, next_token], dim=1)
 
-        # Early stopping if [INST] appears again in tail
-        decoded_tail = tokenizer.decode(input_ids[0][-10:], skip_special_tokens=True)
-        if "[INST]" in decoded_tail:
-            print("[Early Stop] [INST] detected in tail.")
+        # Early stopping if [INST] 
+        if decoded_tail.count("[INST]") > 0 or input_ids.shape[1] > max_len:
+            print("[Early Stop] Repeated [INST] or max length reached.")
             break
 
         if next_token.item() == tokenizer.eos_token_id:
