@@ -21,7 +21,7 @@ def loss_fn(logits, hidden, bow_vec=None, disc_model=None, disc_target=None):
         bow_loss = -torch.log(bow_probs).mean()
 
         print(f"[DEBUG] BoW loss: {bow_loss.item()}")
-        losses.append(0.5 * bow_loss)
+        losses.append(0.2 * bow_loss)
 
     # === Discriminator loss ===
     if disc_model is not None and disc_target is not None:
