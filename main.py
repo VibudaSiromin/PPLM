@@ -86,21 +86,31 @@ print(output)
 # === Save to file ===
 output_file = f"Angry_{TARGET_GROUP}_USE_BOW_{USE_BOW}_USE_DISC_{USE_DISC}.txt"
 
-def ensure_unicode(text):
-    if isinstance(text, bytes):
-        return text.decode('utf-8', errors='replace')
-    return text
+def force_unicode(text):
+    try:
+        # First try normal decoding
+        return str(text).encode('utf-8', 'strict').decode('utf-8')
+    except UnicodeError:
+        try:
+            # Fallback to surrogate escape for damaged unicode
+            return str(text).encode('utf-8', 'surrogateescape').decode('utf-8')
+        except UnicodeError:
+            # Final fallback - replace problematic characters
+            return str(text).encode('utf-8', 'replace').decode('utf-8')
 
-# Write with explicit UTF-8 handling
-with open(output_file, "a", encoding="utf-8", errors="replace") as f:
-    # Add separation if file exists
-    if f.tell() > 0:
-        f.write("\n\n")
-    
-    # Ensure Unicode handling
-    clean_output = ensure_unicode(output)
-    
-    f.write(f"\n=== Response ===\n{clean_output}\n")
-    f.write("-" * 50 + "\n")
+# Prepare content with proper newlines and separators
+content = []
+if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
+    content.append("\n\n")  # Add spacing if file exists
 
-print(f"\nResponse saved with proper emoji support to {output_file}")
+content.extend([
+    f"\n=== Response ===\n{force_unicode(output)}\n",
+    "-" * 50 + "\n"
+])
+
+# Write using binary mode with explicit UTF-8 encoding
+with open(output_file, "ab") as f:  # Note 'b' for binary mode
+    for part in content:
+        f.write(part.encode('utf-8'))
+
+print(f"\nResponse successfully saved with emoji preservation to {output_file}")
