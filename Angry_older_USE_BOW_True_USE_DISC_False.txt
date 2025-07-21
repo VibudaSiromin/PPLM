@@ -45,3 +45,10 @@ Response: � If you feel like nobody listens,If this is a recurring issue with 
 [INST] Why does nobody take me seriously no matter how loud I speak up? [/INST]
 Response: � If you are having trouble getting your point across, the first thing to consider is whether you're speaking in a way that others can understand.People respond more favorably when they feel heard and understood
 --------------------------------------------------
+
+
+
+=== Response ===
+[INST] Why does nobody take me seriously no matter how loud I speak up? [/INST]
+Response: � There are a few things that can cause people to not listen. If you want someone to hear what you have to say, try listening back
+--------------------------------------------------
