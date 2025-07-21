@@ -14,12 +14,6 @@ MODEL_NAME = "Vibuda/llama_trained" # "Qwen/Qwen1.5-7B-Chat"
 model, tokenizer = load_lm(MODEL_NAME)
 device = model.device if hasattr(model, "device") else torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-tokens = tokenizer.tokenize("[INST]")
-ids = tokenizer.convert_tokens_to_ids(tokens)
-print("Tokenized [INST]:", tokens)
-print("IDs:", ids)
-
-
 # Ensure the embedding layer allows gradient
 model.get_input_embeddings().weight.requires_grad = True
 
