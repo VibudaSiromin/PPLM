@@ -37,7 +37,8 @@ def predict_age_group(text):
 if __name__ == "__main__":
     test_texts = [
         "Back in my day, we played outside until sunset",
-        "These newfangled smartphones confuse me"
+        "These newfangled smartphones confuse me",
+        "In the end, only one will remain and will leave the island with $1 million in cash as their reward."
     ]
 
     for text in test_texts:
