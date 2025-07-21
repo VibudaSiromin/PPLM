@@ -41,7 +41,7 @@ if __name__ == "__main__":
     test_texts = [
         "Back in my day, we played outside until sunset",
         "These newfangled smartphones confuse me",
-        "In the end, only one will remain and will leave the island with $1 million in cash as their reward."
+        "Rudy, Sean, Stacey, Sue, can we take 15 minutes and just talk before we do anything?"
     ]
 
     for text in test_texts:
