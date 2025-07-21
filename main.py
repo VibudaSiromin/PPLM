@@ -86,12 +86,19 @@ print(output)
 # === Save to file ===
 output_file = f"Angry_{TARGET_GROUP}_USE_BOW_{USE_BOW}_USE_DISC_{USE_DISC}.txt"
 
-# Write the prompt and response to the file with clear separation
-with open(output_file, "a", encoding="utf-8") as f:
+def clean_text(text):
+    return text.encode('utf-8', 'ignore').decode('utf-8')
+
+# Write the prompt and response to the file with proper encoding
+with open(output_file, "a", encoding="utf-8", errors="ignore") as f:
     # Add two newlines before each new entry if file is not empty
     if f.tell() > 0:  # Check if file is not empty
         f.write("\n\n")
-    f.write(f"\n=== Response ===\n{output}\n")
-    f.write("-" * 50)  # Add a separator
+    
+    # Clean and write response
+    clean_output = clean_text(output)
+    
+    f.write(f"\n=== Response ===\n{clean_output}\n")
+    f.write("-" * 50 + "\n")  # Add a separator with newline
 
-print(f"\nResponse appended to {output_file} (new entry on separate lines)")
+print(f"\nResponse with emojis saved to {output_file}")
