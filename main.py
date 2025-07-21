@@ -22,12 +22,12 @@ gc.collect()
 torch.cuda.empty_cache()
 
 # === Settings ===
-USE_BOW = False
-USE_DISC = True
-TARGET_GROUP = "younger"  # or "older"
+USE_BOW = True
+USE_DISC = False
+TARGET_GROUP = "older"  # or "younger"
 disc_target = 0 if TARGET_GROUP == "younger" else 1
 
-question = "Is it normal to feel worthless all the time?"
+question = "Why does nobody take me seriously no matter how loud I speak up?"
 prompt = f"[INST] {question} [/INST]\nResponse:"
 
 # === Load BoW ===
