@@ -162,6 +162,7 @@ def generate(model, tokenizer, prompt, bow_vec=None, disc_model=None, loss_fn=No
         input_ids = torch.cat([input_ids, next_token], dim=1)
 
         # Early stopping if [INST] 
+        decoded_tail = tokenizer.decode(input_ids[0][-10:], skip_special_tokens=True)
         if decoded_tail.count("[INST]") > 0 or input_ids.shape[1] > max_len:
             print("[Early Stop] Repeated [INST] or max length reached.")
             break
