@@ -10,6 +10,9 @@ llama_name = "Vibuda/llama_trained"
 tokenizer = AutoTokenizer.from_pretrained(llama_name)
 model = AutoModel.from_pretrained(llama_name).to(device).eval()
 
+import os
+print(f"File exists: {os.path.exists('discriminator_llama.pt')}")
+print(f"File size: {os.path.getsize('discriminator_llama.pt')} bytes")
 # Load Discriminator
 discriminator = Discriminator(hidden_size=4096).to(device)  # Adjust hidden_size if needed
 checkpoint = torch.load("discriminator_llama.pt", map_location=device, weights_only=False)
