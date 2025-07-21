@@ -80,37 +80,37 @@ output = generate(
     temperature=0.7
 )
 
-print("\n[Generated Text]")
+print("😊\n[Generated Text]")
 print(output)
 
 # === Save to file ===
 output_file = f"Angry_{TARGET_GROUP}_USE_BOW_{USE_BOW}_USE_DISC_{USE_DISC}.txt"
 
-def force_unicode(text):
-    try:
-        # First try normal decoding
-        return str(text).encode('utf-8', 'strict').decode('utf-8')
-    except UnicodeError:
-        try:
-            # Fallback to surrogate escape for damaged unicode
-            return str(text).encode('utf-8', 'surrogateescape').decode('utf-8')
-        except UnicodeError:
-            # Final fallback - replace problematic characters
-            return str(text).encode('utf-8', 'replace').decode('utf-8')
+# def force_unicode(text):
+#     try:
+#         # First try normal decoding
+#         return str(text).encode('utf-8', 'strict').decode('utf-8')
+#     except UnicodeError:
+#         try:
+#             # Fallback to surrogate escape for damaged unicode
+#             return str(text).encode('utf-8', 'surrogateescape').decode('utf-8')
+#         except UnicodeError:
+#             # Final fallback - replace problematic characters
+#             return str(text).encode('utf-8', 'replace').decode('utf-8')
 
-# Prepare content with proper newlines and separators
-content = []
-if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
-    content.append("\n\n")  # Add spacing if file exists
+# # Prepare content with proper newlines and separators
+# content = []
+# if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
+#     content.append("\n\n")  # Add spacing if file exists
 
-content.extend([
-    f"\n=== Response ===\n{force_unicode(output)}\n",
-    "-" * 50 + "\n"
-])
+# content.extend([
+#     f"\n=== Response ===\n{force_unicode(output)}\n",
+#     "-" * 50 + "\n"
+# ])
 
-# Write using binary mode with explicit UTF-8 encoding
-with open(output_file, "ab") as f:  # Note 'b' for binary mode
-    for part in content:
-        f.write(part.encode('utf-8'))
+# # Write using binary mode with explicit UTF-8 encoding
+# with open(output_file, "ab") as f:  # Note 'b' for binary mode
+#     for part in content:
+#         f.write(part.encode('utf-8'))
 
-print(f"\nResponse successfully saved with emoji preservation to {output_file}")
+# print(f"\nResponse successfully saved with emoji preservation to {output_file}")
