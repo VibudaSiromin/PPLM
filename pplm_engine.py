@@ -43,7 +43,7 @@ def loss_fn(logits, hidden, bow_vec=None, disc_model=None, disc_target=None):
             raise ValueError("[ERROR] Discriminator loss is NaN/Inf")
 
         print(f"[DEBUG] Discriminator loss: {disc_loss.item()}")
-        losses.append(disc_loss)
+        losses.append(0.2 * disc_loss)
 
     # === Fallback dummy loss if none used ===
     if len(losses) == 0:
