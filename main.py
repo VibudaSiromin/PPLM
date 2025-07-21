@@ -60,7 +60,6 @@ if USE_DISC:
 else:
     disc_model = None
 
-print(f"[BoW vector non-zero entries]: {bow_vec.nonzero().shape[0]}")
 
 if disc_model is not None:
     for name, param in disc_model.named_parameters():
