@@ -33,11 +33,15 @@ prompt = f"[INST] {question} [/INST]\nResponse:"
 print("USE_BOW", USE_BOW, "- USE_DISC",USE_DISC)
 
 # === Load BoW ===
-bow_vec = load_bow_vector(
-    f"bow_{TARGET_GROUP}.json",
-    tokenizer,
-    expected_vocab_size=model.config.vocab_size
-).to(device)
+if USE_BOW:
+    bow_vec = load_bow_vector(
+        f"bow_{TARGET_GROUP}.json",
+        tokenizer,
+        expected_vocab_size=model.config.vocab_size
+    ).to(device)
+else:
+    bow_vec = None
+
 
 print(f"[BoW shape]: {bow_vec.shape} | model vocab size: {tokenizer.vocab_size}")
 
