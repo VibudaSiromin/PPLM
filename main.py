@@ -30,6 +30,8 @@ disc_target = 0 if TARGET_GROUP == "younger" else 1
 question = "Why does nobody take me seriously no matter how loud I speak up?"
 prompt = f"[INST] {question} [/INST]\nResponse:"
 
+print("USE_BOW", USE_BOW, "- USE_DISC",USE_DISC)
+
 # === Load BoW ===
 bow_vec = load_bow_vector(
     f"bow_{TARGET_GROUP}.json",
