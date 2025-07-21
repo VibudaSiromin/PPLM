@@ -22,9 +22,9 @@ gc.collect()
 torch.cuda.empty_cache()
 
 # === Settings ===
-USE_BOW = False
-USE_DISC = True
-TARGET_GROUP = "older"  # or "younger"
+USE_BOW = True
+USE_DISC = False
+TARGET_GROUP = "younger"  # or "older"
 disc_target = 0 if TARGET_GROUP == "younger" else 1
 
 question = "I’m sick of being blamed for things I didn’t even do."
