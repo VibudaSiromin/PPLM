@@ -136,6 +136,13 @@ def generate(model, tokenizer, prompt, bow_vec=None, disc_model=None, loss_fn=No
         )
 
         logits = logits[:, -1, :] / temperature
+
+        # === Penalize [INST]-like tokens === 
+        bad_token_ids = [518, 25580, 29962]  # ▁[, INST, ]
+        for tid in bad_token_ids:
+            if tid < logits.shape[-1]:
+                logits[0, tid] -= 5.0  # strong negative bias
+        
         logits = torch.clamp(logits, -50, 50)  # avoid softmax overflow
 
         logits = logits_processor(input_ids, logits)
