@@ -74,10 +74,10 @@ output = generate(
     disc_target=disc_target,
     steps=1,           
     step_size=0.00005,    
-    max_len=1000,
-    top_k=100,
-    top_p=0.95,          
-    temperature=1.0  
+    max_len=100,
+    top_k=50,
+    top_p=0.9,          
+    temperature=0.7
 )
 
 print("\n[Generated Text]")
