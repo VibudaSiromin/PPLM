@@ -41,7 +41,7 @@ if __name__ == "__main__":
     test_texts = [
         "Back in my day, we played outside until sunset",
         "These newfangled smartphones confuse me",
-        "Straight up there."
+        "SYeah, uh-huh."
     ]
 
     for text in test_texts:
