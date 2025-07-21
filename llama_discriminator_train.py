@@ -46,3 +46,20 @@ torch.save({
 }, "discriminator_llama.pt")
 
 print("✅ MLP Discriminator saved to discriminator_llama.pt")
+
+# === Evaluation ===
+model.eval()
+correct = 0
+total = 0
+
+with torch.no_grad():
+    for batch_X, batch_y in DataLoader(dataset, batch_size=16):
+        batch_X, batch_y = batch_X.to(device), batch_y.to(device)
+        logits = model(batch_X)
+        predictions = torch.argmax(logits, dim=1)
+        correct += (predictions == batch_y).sum().item()
+        total += batch_y.size(0)
+
+accuracy = correct / total
+print(f"✅ Discriminator Accuracy: {accuracy * 100:.2f}%")
+
