@@ -39,11 +39,10 @@ if USE_BOW:
         tokenizer,
         expected_vocab_size=model.config.vocab_size
     ).to(device)
+    
+    print(f"[BoW shape]: {bow_vec.shape} | model vocab size: {tokenizer.vocab_size}")
 else:
     bow_vec = None
-
-
-print(f"[BoW shape]: {bow_vec.shape} | model vocab size: {tokenizer.vocab_size}")
 
 disc_model = Discriminator(hidden_size=model.config.hidden_size).to(device)
 
