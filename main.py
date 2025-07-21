@@ -27,17 +27,14 @@ emoji_list =  ["😊", "😄", "😁", "😃", "🥳", "🌟", "🎉","😢", "�
 "💫", "🌷", "🧼", "🌈", "✨", "🫧", "🕊️", "🍋", "☀️", "🧘", "🌿", "🌺", "🪴", "📘", "🛁"
 ]
  
-# Print token IDs for each emoji
-print("=== Emoji Token IDs ===")
-emoji_ids = []
+emoji_token_seqs = []
+
+print("=== Emoji Token Sequences ===")
 for emoji in emoji_list:
     token_ids = tokenizer.encode(emoji, add_special_tokens=False)
-    emoji_ids.extend(token_ids)
+    emoji_token_seqs.append(token_ids)
     print(f"{emoji}: {token_ids}")
-
-# Deduplicate the final list (some emojis map to multi-token)
-emoji_ids = list(set(emoji_ids))
-print("\n✅ Final emoji ID whitelist:", emoji_ids)
+print("\n✅ Final emoji ID whitelist:", emoji_token_seqs)
 
 # Ensure the embedding layer allows gradient
 model.get_input_embeddings().weight.requires_grad = True
