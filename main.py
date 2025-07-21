@@ -86,19 +86,21 @@ print(output)
 # === Save to file ===
 output_file = f"Angry_{TARGET_GROUP}_USE_BOW_{USE_BOW}_USE_DISC_{USE_DISC}.txt"
 
-def clean_text(text):
-    return text.encode('utf-8', 'ignore').decode('utf-8')
+def ensure_unicode(text):
+    if isinstance(text, bytes):
+        return text.decode('utf-8', errors='replace')
+    return text
 
-# Write the prompt and response to the file with proper encoding
-with open(output_file, "a", encoding="utf-8", errors="ignore") as f:
-    # Add two newlines before each new entry if file is not empty
-    if f.tell() > 0:  # Check if file is not empty
+# Write with explicit UTF-8 handling
+with open(output_file, "a", encoding="utf-8", errors="replace") as f:
+    # Add separation if file exists
+    if f.tell() > 0:
         f.write("\n\n")
     
-    # Clean and write response
-    clean_output = clean_text(output)
+    # Ensure Unicode handling
+    clean_output = ensure_unicode(output)
     
     f.write(f"\n=== Response ===\n{clean_output}\n")
-    f.write("-" * 50 + "\n")  # Add a separator with newline
+    f.write("-" * 50 + "\n")
 
-print(f"\nResponse with emojis saved to {output_file}")
+print(f"\nResponse saved with proper emoji support to {output_file}")
