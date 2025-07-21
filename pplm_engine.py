@@ -139,7 +139,10 @@ def generate(model, tokenizer, prompt, bow_vec=None, disc_model=None, loss_fn=No
 
         # === Penalize [INST]-like tokens === 
         bad_token_ids = [518, 25580, 29962]  # ▁[, INST, ]
+        emoji_ids = [30722, 131, 132, 133, 134, 135, 30598, 137, 136, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 29871, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 189, 190, 191, 192, 194, 229, 31135, 243]
         for tid in bad_token_ids:
+            if tid in emoji_ids:
+                continue  # skip emojis
             if tid < logits.shape[-1]:
                 logits[0, tid] -= 5.0  # strong negative bias
         
