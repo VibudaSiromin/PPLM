@@ -8,7 +8,7 @@ from tqdm import tqdm
 MODEL_NAME = "Vibuda/llama_trained"  
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 tokenizer.pad_token = tokenizer.eos_token
-tokenizer.padding_side = "right"  # Ensure padding is on the right
+tokenizer.padding_side = "left"  
 model = AutoModel.from_pretrained(MODEL_NAME, torch_dtype=torch.float16).eval().cuda()
 
 # === Load data ===
