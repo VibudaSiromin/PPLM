@@ -27,7 +27,7 @@ USE_DISC = False
 TARGET_GROUP = "younger"  # or  "older"
 disc_target = 0 if TARGET_GROUP == "younger" else 1
 
-question = "I feel like I’m losing everyone I care about."
+question = "Why does it feel like no one would notice if I disappeared?"
 prompt = f"[INST] {question} [/INST]\nResponse:"
 
 print("USE_BOW", USE_BOW, "- USE_DISC",USE_DISC)
