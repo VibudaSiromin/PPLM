@@ -22,12 +22,12 @@ gc.collect()
 torch.cuda.empty_cache()
 
 # === Settings ===
-USE_BOW = True
-USE_DISC = False
+USE_BOW = False
+USE_DISC = True
 TARGET_GROUP = "younger"  # or  "older"
 disc_target = 0 if TARGET_GROUP == "younger" else 1
 
-question = "Why does it feel like no one would notice if I disappeared?"
+question = "Lately, I feel like I’m not good enough for anyone."
 prompt = f"[INST] {question} [/INST]\nResponse:"
 
 print("USE_BOW", USE_BOW, "- USE_DISC",USE_DISC)
