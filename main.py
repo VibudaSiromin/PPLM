@@ -22,12 +22,12 @@ gc.collect()
 torch.cuda.empty_cache()
 
 # === Settings ===
-USE_BOW = False
-USE_DISC = True
-TARGET_GROUP = "younger"  # or "older"
+USE_BOW = True
+USE_DISC = False
+TARGET_GROUP = "older"  # or  "younger"
 disc_target = 0 if TARGET_GROUP == "younger" else 1
 
-question = "I’m sick of being blamed for things I didn’t even do."
+question = "I finally got that job I’ve been dreaming about!"
 prompt = f"[INST] {question} [/INST]\nResponse:"
 
 print("USE_BOW", USE_BOW, "- USE_DISC",USE_DISC)
