@@ -27,7 +27,7 @@ USE_DISC = True
 TARGET_GROUP = "younger"  # or  "older"
 disc_target = 0 if TARGET_GROUP == "younger" else 1
 
-question = "Just wanted to share that today went really well for once."
+question = "I feel like things are finally falling into place in my life."
 prompt = f"[INST] {question} [/INST]\nResponse:"
 
 print("USE_BOW", USE_BOW, "- USE_DISC",USE_DISC)
