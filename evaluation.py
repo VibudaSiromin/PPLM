@@ -5,7 +5,7 @@ from rouge_score import rouge_scorer
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 
-fileName = 'Texts/Happy_older_BoW.json'
+fileName = 'Texts/Happy_older_Disc.json'
 
 # Load JSON file (replace 'generated_texts.json' with your file path)
 with open(fileName, 'r') as f:
