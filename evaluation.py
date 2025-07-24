@@ -7,7 +7,7 @@ import torch
 from collections import Counter
 from nltk import ngrams
 
-fileName = 'Texts/Angry_older_BoW.json'
+fileName = 'Texts/Angry_older_Disc.json'
 
 # Load generated sentences from JSON file
 with open(fileName, 'r') as f:
