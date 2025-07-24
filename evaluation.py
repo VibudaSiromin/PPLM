@@ -7,88 +7,85 @@ import torch
 from collections import Counter
 from nltk import ngrams
 
-fileName = 'Texts/Angry_older_BoW.json'
-# Load JSON file (replace with your file)
-with open(fileName, 'r') as f:
-    data = json.load(f)  # List of generated sentences
+fileName = 'Angry_older_BoW.json'
 
-# Initialize metric storage
+# Load generated sentences from JSON file
+with open(fileName, 'r') as f:
+    data = json.load(f)
+
+# Initialize metric containers
 bleu_scores = []
 rouge1_scores, rouge2_scores, rougeL_scores = [], [], []
 perplexities = []
+dist1_list, dist2_list, dist3_list = [], [], []
 
-# For Dist-N
-all_unigrams = []
-all_bigrams = []
-all_trigrams = []
-
-# ROUGE scorer
+# Set up ROUGE scorer
 rouge_scorer = rs.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)
 
-# Load your fine-tuned LLaMA model
+# Load model and tokenizer
 model_name = "Vibuda/llama_trained"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForCausalLM.from_pretrained(model_name).to("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model = AutoModelForCausalLM.from_pretrained(model_name).to(device)
 
-# Loop through each sentence
+# Helper function: Dist-N per sentence
+def calc_dist_n(tokens, n):
+    n_grams = list(ngrams(tokens, n))
+    total = len(n_grams)
+    unique = len(set(n_grams))
+    return unique / total if total > 0 else 0.0
+
+# Loop over sentences
 for sentence in data:
     tokens = sentence.split()
 
-    # Collect for Dist-N
-    all_unigrams.extend(tokens)
-    all_bigrams.extend(list(ngrams(tokens, 2)))
-    all_trigrams.extend(list(ngrams(tokens, 3)))
-
-    # BLEU: sentence compared with itself (or use reference if available)
-    ref = [tokens]
-    hyp = tokens
-    bleu = sentence_bleu(ref, hyp)
+    # BLEU (self-comparison)
+    bleu = sentence_bleu([tokens], tokens)
     bleu_scores.append(bleu)
 
-    # ROUGE: self comparison (or use reference if available)
-    rouge_scores = rouge_scorer.score(sentence, sentence)
-    rouge1_scores.append(rouge_scores['rouge1'].fmeasure)
-    rouge2_scores.append(rouge_scores['rouge2'].fmeasure)
-    rougeL_scores.append(rouge_scores['rougeL'].fmeasure)
+    # ROUGE (self-comparison)
+    rouge = rouge_scorer.score(sentence, sentence)
+    rouge1_scores.append(rouge['rouge1'].fmeasure)
+    rouge2_scores.append(rouge['rouge2'].fmeasure)
+    rougeL_scores.append(rouge['rougeL'].fmeasure)
 
     # Perplexity
     inputs = tokenizer(sentence, return_tensors="pt")
-    inputs = {k: v.to(model.device) for k, v in inputs.items()}
+    inputs = {k: v.to(device) for k, v in inputs.items()}
     with torch.no_grad():
         outputs = model(**inputs, labels=inputs["input_ids"])
         loss = outputs.loss
         perplexity = torch.exp(loss).item()
     perplexities.append(perplexity)
 
-# Compute Dist-N
-def compute_distinct_ngrams(all_ngrams):
-    total = len(all_ngrams)
-    unique = len(set(all_ngrams))
-    return unique / total if total > 0 else 0.0
+    # Dist-1, Dist-2, Dist-3 per sentence
+    dist1_list.append(calc_dist_n(tokens, 1))
+    dist2_list.append(calc_dist_n(tokens, 2))
+    dist3_list.append(calc_dist_n(tokens, 3))
 
-dist1 = compute_distinct_ngrams(all_unigrams)
-dist2 = compute_distinct_ngrams(all_bigrams)
-dist3 = compute_distinct_ngrams(all_trigrams)
+# Function to compute mean and standard error
+def mean_and_stderr(lst):
+    mean = np.mean(lst)
+    stderr = np.std(lst, ddof=1) / np.sqrt(len(lst))
+    return mean, stderr
 
-# Average & Std Err
-def mean_and_std_err(scores):
-    mean = np.mean(scores)
-    std_err = np.std(scores) / np.sqrt(len(scores))
-    return mean, std_err
+# Compute means and errors
+bleu_mean, bleu_err = mean_and_stderr(bleu_scores)
+rouge1_mean, rouge1_err = mean_and_stderr(rouge1_scores)
+rouge2_mean, rouge2_err = mean_and_stderr(rouge2_scores)
+rougeL_mean, rougeL_err = mean_and_stderr(rougeL_scores)
+perp_mean, perp_err = mean_and_stderr(perplexities)
+dist1_mean, dist1_err = mean_and_stderr(dist1_list)
+dist2_mean, dist2_err = mean_and_stderr(dist2_list)
+dist3_mean, dist3_err = mean_and_stderr(dist3_list)
 
-bleu_mean, bleu_err = mean_and_std_err(bleu_scores)
-rouge1_mean, rouge1_err = mean_and_std_err(rouge1_scores)
-rouge2_mean, rouge2_err = mean_and_std_err(rouge2_scores)
-rougeL_mean, rougeL_err = mean_and_std_err(rougeL_scores)
-perp_mean, perp_err = mean_and_std_err(perplexities)
-
-# Final Output
-print("=== Evaluation Metrics ===")
+# Print final results
+print("=== Evaluation Metrics with Standard Errors ===")
 print(f"BLEU: {bleu_mean:.4f} ± {bleu_err:.4f}")
 print(f"ROUGE-1: {rouge1_mean:.4f} ± {rouge1_err:.4f}")
 print(f"ROUGE-2: {rouge2_mean:.4f} ± {rouge2_err:.4f}")
 print(f"ROUGE-L: {rougeL_mean:.4f} ± {rougeL_err:.4f}")
 print(f"Perplexity: {perp_mean:.4f} ± {perp_err:.4f}")
-print(f"Dist-1 (Unigrams): {dist1:.4f}")
-print(f"Dist-2 (Bigrams): {dist2:.4f}")
-print(f"Dist-3 (Trigrams): {dist3:.4f}")
+print(f"Dist-1 (Unigrams): {dist1_mean:.4f} ± {dist1_err:.4f}")
+print(f"Dist-2 (Bigrams): {dist2_mean:.4f} ± {dist2_err:.4f}")
+print(f"Dist-3 (Trigrams): {dist3_mean:.4f} ± {dist3_err:.4f}")
