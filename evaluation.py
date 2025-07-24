@@ -6,7 +6,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 
 # Load JSON file (replace 'generated_texts.json' with your file path)
-with open('generated_texts.json', 'r') as f:
+with open('Texts/Angry_older_BoW.json', 'r') as f:
     data = json.load(f)  # Assumes JSON contains a list of sentences
 
 # Initialize metrics storage
