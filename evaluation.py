@@ -80,7 +80,7 @@ dist2_mean, dist2_err = mean_and_stderr(dist2_list)
 dist3_mean, dist3_err = mean_and_stderr(dist3_list)
 
 # Print final results
-print("=== Evaluation Metrics with Standard Errors ===")
+print("=== Evaluation Metrics with Standard Errors ===",fileName)
 print(f"BLEU: {bleu_mean:.4f} ± {bleu_err:.4f}")
 print(f"ROUGE-1: {rouge1_mean:.4f} ± {rouge1_err:.4f}")
 print(f"ROUGE-2: {rouge2_mean:.4f} ± {rouge2_err:.4f}")
