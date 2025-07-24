@@ -5,8 +5,10 @@ from rouge_score import rouge_scorer
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 
+fileName = 'Texts/Angry_older_BoW.json'
+
 # Load JSON file (replace 'generated_texts.json' with your file path)
-with open('Texts/Angry_older_BoW.json', 'r') as f:
+with open(fileName, 'r') as f:
     data = json.load(f)  # Assumes JSON contains a list of sentences
 
 # Initialize metrics storage
@@ -57,7 +59,7 @@ rougeL_mean, rougeL_err = mean_and_std_err(rougeL_scores)
 perp_mean, perp_err = mean_and_std_err(perplexities)
 
 # Print results
-print("=== Evaluation Metrics ===")
+print("=== Evaluation Metrics ===", fileName)
 print(f"BLEU: {bleu_mean:.4f} ± {bleu_err:.4f}")
 print(f"ROUGE-1: {rouge1_mean:.4f} ± {rouge1_err:.4f}")
 print(f"ROUGE-2: {rouge2_mean:.4f} ± {rouge2_err:.4f}")
