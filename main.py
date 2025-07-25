@@ -74,7 +74,7 @@ output = generate(
     prompt,
     bow_vec=None,
     disc_model=None,
-    loss_fn=None,
+    loss_fn=base_loss_fn,
     disc_target=disc_target,
     # steps=1,           
     # step_size=0.00001,    
