@@ -27,7 +27,7 @@ USE_DISC = False
 TARGET_GROUP = "older"  # or  "younger"
 disc_target = 0 if TARGET_GROUP == "younger" else 1
 
-question = "I’m sick of being blamed for things I didn’t even do."
+question = "Why does nobody take me seriously no matter how loud I speak up?"
 prompt = f"[INST] {question} [/INST]\nResponse:"
 
 print("USE_BOW", USE_BOW, "- USE_DISC",USE_DISC)
@@ -72,12 +72,12 @@ output = generate(
     model,
     tokenizer,
     prompt,
-    bow_vec=bow_vec,
-    disc_model=disc_model,
-    loss_fn=base_loss_fn,
+    bow_vec=None,
+    disc_model=None,
+    loss_fn=None,
     disc_target=disc_target,
-    steps=1,           
-    step_size=0.00001,    
+    # steps=1,           
+    # step_size=0.00001,    
     max_len=500,
     top_k=50,
     top_p=0.9,          
